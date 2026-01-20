@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Wiemar's Jewelry Signage</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #000;
+      color: white;
+      overflow: hidden;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
+      height: 100vh;
+      width: 100vw;
+      gap: 5px;
+      padding: 5px;
+    }
+
+    .top-slideshow {
+      grid-column: 1 / 2;
+      grid-row: 1 / 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .top-slideshow img {
+      max-height: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: opacity 2s ease-in-out;
+      position: absolute;
+      left: 0;
+      right: 0;
+      margin: auto;
+    }
+
+    .clock {
+      grid-column: 2 / 3;
+      grid-row: 1 / 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 6em;
+      font-family: 'Impact', sans-serif;
+      text-align: center;
+    }
+
+    .video-loop {
+      grid-column: 3 / 4;
+      grid-row: 1 / 2;
+    }
+
+    .video-loop video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .bottom-container {
+      grid-column: 1 / 4;
+      grid-row: 2 / 3;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+    }
+
+    .bottom-slideshow {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bottom-slideshow img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      transition: opacity 1s ease-in-out;
+    }
+
+    .btv-stream {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .btv-stream video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border: none;
+    }
+
+    .corner-logo {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 5px 10px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 1000;
+    }
+
+    .corner-logo img {
+      height: 30px;
+      width: auto;
+    }
+
+    .corner-logo span {
+      color: white;
+      font-size: 0.8em;
+      font-family: Arial, sans-serif;
+    }
+
+    .corner-logo a {
+      color: #ccc;
+      text-decoration: none;
+    }
+
+    .corner-logo a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="grid-container">
+    
+    <!-- Slideshow vertical (top left) -->
+    <div class="top-slideshow" id="topSlideshow">
+      <img src="http://laprensalatina.com/wp-content/uploads/2025/06/8-16-2024-1-scaled.avif" />
+      <img src="http://laprensalatina.com/wp-content/uploads/2025/06/9-11-24a.avif" />
+      <img src="http://laprensalatina.com/wp-content/uploads/2025/06/11-24-24-3-scaled.avif" />
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/10/1000062696.avif" />
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/10/1000062697.avif" />
+      <img src="http://laprensalatina.com/wp-content/uploads/2025/06/428670563_10230655054537699_4663040450853901336_n.avif" />
+    </div>
+
+    <!-- Clock -->
+    <div class="clock" id="clock">00:00:00</div>
+
+    <!-- VIDEO WIEMAR (TOP RIGHT) -->
+    <div class="video-loop">
+      <video id="wiemarVideo" autoplay muted playsinline loop>
+        <source src="http://laprensalatina.com/wp-content/uploads/2025/06/wiemars-logo-diamant-video.mp4" type="video/mp4" />
+      </video>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="bottom-container">
+      
+      <div class="bottom-slideshow" id="bottomSlideshow">
+        <img src="http://laprensalatina.com/wp-content/uploads/2025/06/481052234_10234215243780205_7307714604725075650_n.avif" />
+        <img src="http://laprensalatina.com/wp-content/uploads/2025/06/480239285_1080051100593439_481976388239871683_n.avif" />
+        <img src="http://laprensalatina.com/wp-content/uploads/2025/06/DSC05749-scaled.avif" />
+        <img src="http://laprensalatina.com/wp-content/uploads/2025/06/DSC06662.avif" />
+        <img src="http://laprensalatina.com/wp-content/uploads/2025/06/492487653_1135465708385311_986035875599615656_n.avif" />
+      </div>
+
+      <!-- BTV MP4 -->
+      <div class="btv-stream">
+        <video
+          id="btvVideo"
+          autoplay
+          muted
+          playsinline
+          loop
+          style="width:100%; height:100%; object-fit:cover;">
+          <source src="https://laprensalatina.com/wp-content/uploads/2025/11/BTV-for-Ablesign-v2.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+    </div>
+</div>
+
+<!-- Corner logo -->
+<div class="corner-logo">
+  <img src="https://laprensalatina.com/wp-content/uploads/2025/07/Bilingual-Media-Logo-LIGHT.avif" />
+  <span>Displays by <a href="https://www.bilingualmediagroup.com" target="_blank">www.bilingualmediagroup.com</a></span>
+</div>
+
+<script>
+
+  /* Clock */
+  function updateClock() {
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    document.getElementById("clock").textContent =
+      String(hours).padStart(2, '0') + ':' +
+      String(minutes).padStart(2, '0') + ':' +
+      String(seconds).padStart(2, '0') + ' ' + ampm;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  /* Slideshows */
+  function cycleImages(id, interval = 10000) {
+    const container = document.getElementById(id);
+    const images = container.querySelectorAll('img');
+    let i = 0;
+    images.forEach((img, idx) => img.style.opacity = idx === 0 ? 1 : 0);
+
+    setInterval(() => {
+      images[i].style.opacity = 0;
+      i = (i + 1) % images.length;
+      images[i].style.opacity = 1;
+    }, interval);
+  }
+  cycleImages("topSlideshow");
+  cycleImages("bottomSlideshow");
+
+</script>
+
+</body>
+</html>
