@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Signage Loader</title>
+    <style>
+        /* Estilos para asegurar que ocupe toda la pantalla sin bordes */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Evita barras de desplazamiento */
+            background-color: #000; /* Fondo negro mientras carga */
+            font-family: Arial, sans-serif;
+        }
+
+        /* Estilo del iframe a pantalla completa */
+        #content-frame {
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            display: block;
+        }
+
+        /* Mensaje de carga o error */
+        #status-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="status-message">Conectando con Google Sheet...</div>
+
+    <iframe id="content-frame" class="hidden" allow="autoplay; fullscreen" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-popups"></iframe>
+
+    <script>
+        // --- CONFIGURACIÓN ---
+        // Aquí ya he puesto TU URL específica del Google Apps Script
+        const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxN3pLKuMS0IT2okn66PJw1HQmI_OfSS7WXYXrIyr794a07TX82z_H3Z-SrKGBXRtSQ/exec"; 
+
+        // --- LÓGICA DEL LOADER ---
+        async function initLoader() {
+            const statusDiv = document.getElementById('status-message');
+            const iframe = document.getElementById('content-frame');
+
+            try {
+                // 1. Detectar el ID del cliente desde la URL del navegador
+                // Busca el parámetro ?client=... en la barra de direcciones
+                const urlParams = new URLSearchParams(window.location.search);
+                const clientId = urlParams.get('client');
+
+                if (!clientId) {
+                    throw new Error("Falta el ID del cliente. Usa: index.html?client=NOMBRE");
+                }
+
+                // 2. Obtener la lista de clientes desde TU Google Sheet
+                statusDiv.innerText = "Buscando cliente: " + clientId + "...";
+                
+                const response = await fetch(SHEET_API_URL);
+                if (!response.ok) throw new Error("Error conectando con la base de datos (Google Sheet)");
+                
+                const data = await response.json();
+                console.log("Datos recibidos del Sheet:", data); // Para ver en la consola si hay errores
+
+                // 3. Buscar la URL correspondiente al cliente en los datos recibidos
+                // Convierte todo a minúsculas para evitar errores si escribes "Wiemar" o "wiemar"
+                const clientConfig = data.find(item => item.client_id && item.client_id.toString().toLowerCase() === clientId.toLowerCase());
+
+                if (clientConfig && clientConfig.layout_url) {
+                    // 4. Cargar el layout en el iframe
+                    statusDiv.innerText = "Cargando diseño...";
+                    iframe.src = clientConfig.layout_url;
+                    
+                    // Cuando el iframe termine de cargar, mostrarlo y ocultar el mensaje
+                    iframe.onload = () => {
+                        statusDiv.classList.add('hidden');
+                        iframe.classList.remove('hidden');
+                        console.log("Layout cargado exitosamente.");
+                    };
+                } else {
+                    throw new Error("Cliente '" + clientId + "' no encontrado en el Sheet.");
+                }
+
+            } catch (error) {
+                console.error(error);
+                statusDiv.innerText = "Error: " + error.message;
+                statusDiv.style.color = "#ff6b6b"; 
+            }
+        }
+
+        // Iniciar el script automáticamente
+        initLoader();
+    </script>
+</body>
+</html>
