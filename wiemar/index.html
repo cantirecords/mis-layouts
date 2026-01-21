@@ -29,9 +29,9 @@
       gap: 5px;
     }
 
-    /* Cajas contenedoras */
+    /* Cajas contenedoras - FONDO NEGRO */
     .box {
-      background: #111;
+      background: #000; 
       position: relative;
       overflow: hidden;
       display: flex;
@@ -39,17 +39,26 @@
       justify-content: center;
     }
 
-    /* Imagenes de Slideshow */
-    .box img {
+    /* Slideshow Arriba (Portrait - NO CORTA CABEZAS) */
+    #topSlideshow img {
       position: absolute;
       width: 100%;
       height: 100%;
-      object-fit: cover;
-      display: none; /* Escondemos todas por defecto */
+      object-fit: contain; /* Esto asegura que la foto vertical se vea entera */
+      display: none; 
+    }
+
+    /* Slideshow Abajo */
+    #bottomSlideshow img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover; 
+      display: none; 
     }
 
     .box img.active {
-      display: block; /* Solo mostramos la activa */
+      display: block; 
     }
 
     .clock {
@@ -57,6 +66,7 @@
       font-family: 'Impact', sans-serif;
       font-weight: bold;
       color: #fff;
+      background: #000; /* Fondo negro para el texto */
     }
 
     video {
@@ -91,6 +101,8 @@
             <img src="https://laprensalatina.com/wp-content/uploads/2025/06/9-11-24a.avif">
             <img src="https://laprensalatina.com/wp-content/uploads/2025/06/11-24-24-3-scaled.avif">
             <img src="https://laprensalatina.com/wp-content/uploads/2025/10/1000062696.avif">
+            <img src="https://laprensalatina.com/wp-content/uploads/2025/10/1000062697.avif">
+            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/428670563_10230655054537699_4663040450853901336_n.avif">
         </div>
 
         <div class="box">
@@ -109,6 +121,8 @@
             <img src="https://laprensalatina.com/wp-content/uploads/2025/06/481052234_10234215243780205_7307714604725075650_n.avif" class="active">
             <img src="https://laprensalatina.com/wp-content/uploads/2025/06/480239285_1080051100593439_481976388239871683_n.avif">
             <img src="https://laprensalatina.com/wp-content/uploads/2025/06/DSC05749-scaled.avif">
+            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/DSC06662.avif">
+            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/492487653_1135465708385311_986035875599615656_n.avif">
         </div>
 
         <div class="box">
@@ -125,7 +139,6 @@
 </div>
 
 <script>
-    // RELOJ SIMPLE
     function updateClock() {
         const now = new Date();
         let h = now.getHours();
@@ -138,20 +151,18 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // SLIDESHOW ULTRA-COMPATIBLE
     function startSlideshow(containerId, time) {
         const container = document.getElementById(containerId);
         const imgs = container.getElementsByTagName('img');
         let index = 0;
 
         setInterval(() => {
-            imgs[index].classList.remove('active'); // Quita la actual
-            index = (index + 1) % imgs.length;      // Pasa a la siguiente
-            imgs[index].classList.add('active');    // Muestra la nueva
+            imgs[index].classList.remove('active'); 
+            index = (index + 1) % imgs.length;      
+            imgs[index].classList.add('active');    
         }, time);
     }
 
-    // Iniciamos con tiempos distintos para que no cambien a la vez
     startSlideshow("topSlideshow", 5000);
     startSlideshow("bottomSlideshow", 7000);
 </script>
