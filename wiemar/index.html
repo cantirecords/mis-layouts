@@ -7,7 +7,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #000; color: white; overflow: hidden; width: 100vw; height: 100vh; }
 
-    /* Estructura de 3 columnas arriba y 2 abajo */
     .grid-main {
       display: grid;
       grid-template-rows: 50% 50%;
@@ -29,7 +28,6 @@
       gap: 5px;
     }
 
-    /* Cajas contenedoras - FONDO NEGRO */
     .box {
       background: #000; 
       position: relative;
@@ -39,26 +37,26 @@
       justify-content: center;
     }
 
-    /* Slideshow Arriba (Portrait - NO CORTA CABEZAS) */
+    /* Ajuste de Slideshows con Opacidad para mayor compatibilidad */
+    .box img {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0; /* Todas invisibles al inicio */
+      transition: opacity 0.5s ease-in-out;
+    }
+
     #topSlideshow img {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      object-fit: contain; /* Esto asegura que la foto vertical se vea entera */
-      display: none; 
+      object-fit: contain; /* No corta cabezas arriba */
     }
 
-    /* Slideshow Abajo */
     #bottomSlideshow img {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      object-fit: cover; 
-      display: none; 
+      object-fit: cover; /* Llena el espacio abajo */
     }
 
+    /* Clase para mostrar la imagen */
     .box img.active {
-      display: block; 
+      opacity: 1;
     }
 
     .clock {
@@ -66,7 +64,6 @@
       font-family: 'Impact', sans-serif;
       font-weight: bold;
       color: #fff;
-      background: #000; /* Fondo negro para el texto */
     }
 
     video {
@@ -75,7 +72,6 @@
       object-fit: cover;
     }
 
-    /* Logo flotante */
     .corner-logo {
       position: fixed;
       bottom: 15px;
@@ -106,7 +102,7 @@
         </div>
 
         <div class="box">
-            <div class="clock" id="clock">00:00:00</div>
+            <div class="clock" id="clock">00:00:00 AM</div>
         </div>
 
         <div class="box">
@@ -156,13 +152,18 @@
         const imgs = container.getElementsByTagName('img');
         let index = 0;
 
+        // Función para cambiar imagen
         setInterval(() => {
-            imgs[index].classList.remove('active'); 
-            index = (index + 1) % imgs.length;      
-            imgs[index].classList.add('active');    
+            // Quitar clase activa a la actual
+            imgs[index].classList.remove('active');
+            // Pasar al siguiente índice
+            index = (index + 1) % imgs.length;
+            // Poner clase activa a la nueva
+            imgs[index].classList.add('active');
         }, time);
     }
 
+    // Iniciamos slideshows
     startSlideshow("topSlideshow", 5000);
     startSlideshow("bottomSlideshow", 7000);
 </script>
