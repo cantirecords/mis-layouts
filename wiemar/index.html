@@ -7,6 +7,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #000; color: white; overflow: hidden; width: 100vw; height: 100vh; }
 
+    /* Estructura principal */
     .grid-main {
       display: grid;
       grid-template-rows: 50% 50%;
@@ -20,41 +21,51 @@
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 5px;
+      height: 100%;
     }
 
     .bottom-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 5px;
+      height: 100%;
     }
 
+    /* Cajas contenedoras seguras */
     .box {
       background: #000; 
       position: relative;
-      overflow: hidden;
+      overflow: hidden; /* Esto evita que cualquier imagen rompa el cuadro */
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-
-    /* Ajuste de Slideshows con Opacidad para mayor compatibilidad */
-    .box img {
-      position: absolute;
       width: 100%;
       height: 100%;
-      opacity: 0; /* Todas invisibles al inicio */
+    }
+
+    /* Ajuste de Imágenes */
+    .box img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
       transition: opacity 0.5s ease-in-out;
     }
 
+    /* Arriba: No corta cabezas */
     #topSlideshow img {
-      object-fit: contain; /* No corta cabezas arriba */
+      object-fit: contain;
     }
 
+    /* Abajo: Llena el cuadro pero SIN SALIRSE */
     #bottomSlideshow img {
-      object-fit: cover; /* Llena el espacio abajo */
+      object-fit: cover;
+      max-width: 100%;
+      max-height: 100%;
     }
 
-    /* Clase para mostrar la imagen */
     .box img.active {
       opacity: 1;
     }
@@ -152,18 +163,15 @@
         const imgs = container.getElementsByTagName('img');
         let index = 0;
 
-        // Función para cambiar imagen
         setInterval(() => {
-            // Quitar clase activa a la actual
-            imgs[index].classList.remove('active');
-            // Pasar al siguiente índice
-            index = (index + 1) % imgs.length;
-            // Poner clase activa a la nueva
-            imgs[index].classList.add('active');
+            if (imgs.length > 0) {
+                imgs[index].classList.remove('active');
+                index = (index + 1) % imgs.length;
+                imgs[index].classList.add('active');
+            }
         }, time);
     }
 
-    // Iniciamos slideshows
     startSlideshow("topSlideshow", 5000);
     startSlideshow("bottomSlideshow", 7000);
 </script>
