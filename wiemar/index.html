@@ -7,7 +7,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #000; color: white; overflow: hidden; width: 100vw; height: 100vh; }
 
-    /* Estructura principal */
+    /* Estructura de 3 columnas arriba y 2 abajo */
     .grid-main {
       display: grid;
       grid-template-rows: 50% 50%;
@@ -29,8 +29,9 @@
       gap: 5px;
     }
 
+    /* Cajas contenedoras */
     .box {
-      background: #000; /* Fondo negro puro */
+      background: #111;
       position: relative;
       overflow: hidden;
       display: flex;
@@ -38,54 +39,24 @@
       justify-content: center;
     }
 
-    /* SLIDESHOW ARRIBA (Portrait - No corta cabezas) */
-    #topSlideshow img {
+    /* Imagenes de Slideshow */
+    .box img {
       position: absolute;
       width: 100%;
       height: 100%;
-      object-fit: contain; /* Muestra la imagen completa sin cortar */
-      background: #000;
-      display: none;
-    }
-
-    /* SLIDESHOW ABAJO (Horizontal) */
-    #bottomSlideshow img {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      object-fit: cover; /* Aquí sí llena todo el cuadro */
-      display: none;
+      object-fit: cover;
+      display: none; /* Escondemos todas por defecto */
     }
 
     .box img.active {
-      display: block;
-    }
-
-    /* RELOJ MEJORADO */
-    .clock-container {
-      background: #000; /* Fondo negro */
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid #222; /* Sutil borde para separar */
+      display: block; /* Solo mostramos la activa */
     }
 
     .clock {
-      font-size: 5vw;
+      font-size: 5.5vw;
       font-family: 'Impact', sans-serif;
       font-weight: bold;
       color: #fff;
-      line-height: 1;
-    }
-
-    .date-label {
-      font-size: 1.5vw;
-      color: #888;
-      margin-top: 10px;
-      text-transform: uppercase;
     }
 
     video {
@@ -94,20 +65,21 @@
       object-fit: cover;
     }
 
+    /* Logo flotante */
     .corner-logo {
       position: fixed;
       bottom: 15px;
       right: 15px;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(0, 0, 0, 0.8);
       padding: 10px;
       border-radius: 8px;
       display: flex;
       align-items: center;
       gap: 10px;
-      border: 1px solid #333;
+      border: 1px solid #444;
       z-index: 999;
     }
-    .corner-logo img { height: 35px; width: auto; }
+    .corner-logo img { height: 30px; width: auto; }
   </style>
 </head>
 <body>
@@ -119,15 +91,10 @@
             <img src="https://laprensalatina.com/wp-content/uploads/2025/06/9-11-24a.avif">
             <img src="https://laprensalatina.com/wp-content/uploads/2025/06/11-24-24-3-scaled.avif">
             <img src="https://laprensalatina.com/wp-content/uploads/2025/10/1000062696.avif">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/10/1000062697.avif">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/428670563_10230655054537699_4663040450853901336_n.avif">
         </div>
 
         <div class="box">
-            <div class="clock-container">
-                <div class="clock" id="clock">00:00:00</div>
-                <div class="date-label" id="date">CARGANDO FECHA...</div>
-            </div>
+            <div class="clock" id="clock">00:00:00</div>
         </div>
 
         <div class="box">
@@ -142,7 +109,6 @@
             <img src="https://laprensalatina.com/wp-content/uploads/2025/06/481052234_10234215243780205_7307714604725075650_n.avif" class="active">
             <img src="https://laprensalatina.com/wp-content/uploads/2025/06/480239285_1080051100593439_481976388239871683_n.avif">
             <img src="https://laprensalatina.com/wp-content/uploads/2025/06/DSC05749-scaled.avif">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/DSC06662.avif">
         </div>
 
         <div class="box">
@@ -155,10 +121,11 @@
 
 <div class="corner-logo">
     <img src="https://laprensalatina.com/wp-content/uploads/2025/07/Bilingual-Media-Logo-LIGHT.avif">
-    <span style="font-size: 13px;">Displays by Bilingual Media Group</span>
+    <span style="font-size: 12px;">Displays by Bilingual Media Group</span>
 </div>
 
 <script>
+    // RELOJ SIMPLE
     function updateClock() {
         const now = new Date();
         let h = now.getHours();
@@ -166,29 +133,27 @@
         const s = String(now.getSeconds()).padStart(2, '0');
         const ampm = h >= 12 ? 'PM' : 'AM';
         h = h % 12 || 12;
-        
         document.getElementById("clock").textContent = h + ":" + m + ":" + s + " " + ampm;
-        
-        const options = { weekday: 'long', day: 'numeric', month: 'long' };
-        document.getElementById("date").textContent = now.toLocaleDateString('es-ES', options);
     }
     setInterval(updateClock, 1000);
     updateClock();
 
+    // SLIDESHOW ULTRA-COMPATIBLE
     function startSlideshow(containerId, time) {
         const container = document.getElementById(containerId);
         const imgs = container.getElementsByTagName('img');
         let index = 0;
 
         setInterval(() => {
-            imgs[index].classList.remove('active');
-            index = (index + 1) % imgs.length;
-            imgs[index].classList.add('active');
+            imgs[index].classList.remove('active'); // Quita la actual
+            index = (index + 1) % imgs.length;      // Pasa a la siguiente
+            imgs[index].classList.add('active');    // Muestra la nueva
         }, time);
     }
 
-    startSlideshow("topSlideshow", 6000);
-    startSlideshow("bottomSlideshow", 8000);
+    // Iniciamos con tiempos distintos para que no cambien a la vez
+    startSlideshow("topSlideshow", 5000);
+    startSlideshow("bottomSlideshow", 7000);
 </script>
 
 </body>
