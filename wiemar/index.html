@@ -2,48 +2,66 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Wiemar Signage Pro</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background: #000; color: white; overflow: hidden; width: 100vw; height: 100vh; }
+  <title>Wiemar Signage Pro - Modern</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
 
-    /* Estructura principal */
+  <style>
+    /* --- RESET & BASIC SETUP --- */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body { 
+      font-family: 'Montserrat', sans-serif; 
+      /* Dark Gradient Background instead of plain black */
+      background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+      color: white; 
+      overflow: hidden; 
+      width: 100vw; 
+      height: 100vh; 
+    }
+
+    /* --- LAYOUT GRID --- */
     .grid-main {
       display: grid;
-      grid-template-rows: 50% 50%;
+      grid-template-rows: 48% 44% 6%; /* Top, Bottom, Ticker area */
       height: 100vh;
       width: 100vw;
-      gap: 5px;
-      padding: 5px;
+      gap: 10px;
+      padding: 10px;
     }
 
     .top-row {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 5px;
+      gap: 10px;
       height: 100%;
     }
 
     .bottom-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 5px;
+      grid-template-columns: 1.5fr 1fr; /* Left side slightly wider for photos */
+      gap: 10px;
       height: 100%;
     }
 
-    /* Cajas contenedoras seguras */
+    /* --- MODERN CARD STYLING (Glass Effect) --- */
     .box {
-      background: #000; 
+      background: rgba(30, 30, 30, 0.6); /* Semi-transparent dark */
+      backdrop-filter: blur(10px); /* Frosted glass effect */
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px; /* Rounded corners */
       position: relative;
-      overflow: hidden; /* Esto evita que cualquier imagen rompa el cuadro */
+      overflow: hidden;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      height: 100%;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
 
-    /* Ajuste de Imágenes */
+    /* --- IMAGE HANDLING --- */
     .box img {
       position: absolute;
       top: 0;
@@ -51,57 +69,122 @@
       width: 100%;
       height: 100%;
       opacity: 0;
-      transition: opacity 0.5s ease-in-out;
-    }
-
-    /* Arriba: No corta cabezas */
-    #topSlideshow img {
-      object-fit: contain;
-    }
-
-    /* Abajo: Llena el cuadro pero SIN SALIRSE */
-    #bottomSlideshow img {
-      object-fit: cover;
-      max-width: 100%;
-      max-height: 100%;
+      transition: opacity 1s ease-in-out;
     }
 
     .box img.active {
       opacity: 1;
     }
 
-    .clock {
-      font-size: 5.5vw;
-      font-family: 'Impact', sans-serif;
-      font-weight: bold;
-      color: #fff;
+    /* Top Slideshow: Contain (don't cut heads) */
+    #topSlideshow img {
+      object-fit: contain;
+      background: #000; /* Black bg for images that don't fill width */
     }
 
+    /* Bottom Slideshow: Cover + Zoom Effect (Ken Burns) */
+    #bottomSlideshow img {
+      object-fit: cover;
+      transform: scale(1);
+      transition: opacity 1s ease-in-out, transform 10s linear;
+    }
+    #bottomSlideshow img.active {
+      transform: scale(1.1); /* Slow zoom in */
+    }
+
+    /* --- CLOCK & DATE WIDGET --- */
+    .time-widget {
+      text-align: center;
+      z-index: 2;
+    }
+    .clock {
+      font-family: 'Oswald', sans-serif;
+      font-size: 5vw;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); /* Neon glow */
+      line-height: 1;
+    }
+    .date-display {
+      font-size: 1.2vw;
+      color: #ccc;
+      margin-top: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    /* --- VIDEO --- */
     video {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      border-radius: 15px;
     }
 
+    /* --- SCROLLING TICKER (New Feature) --- */
+    .ticker-container {
+      grid-column: 1 / -1; /* Span full width */
+      background: #b90000; /* Dark Red background for attention */
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      white-space: nowrap;
+      border-radius: 8px;
+      position: relative;
+      box-shadow: 0 0 10px rgba(185, 0, 0, 0.4);
+    }
+    
+    .ticker-label {
+      background: #fff;
+      color: #b90000;
+      padding: 0 20px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+      z-index: 10;
+      box-shadow: 5px 0 10px rgba(0,0,0,0.3);
+    }
+
+    .ticker-text {
+      display: inline-block;
+      padding-left: 100%;
+      animation: marquee 20s linear infinite;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+
+    @keyframes marquee {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-100%, 0); }
+    }
+
+    /* --- CORNER LOGO --- */
     .corner-logo {
       position: fixed;
-      bottom: 15px;
-      right: 15px;
-      background: rgba(0, 0, 0, 0.8);
-      padding: 10px;
-      border-radius: 8px;
+      bottom: 80px; /* Moved up slightly to clear the ticker */
+      right: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      padding: 8px 15px;
+      border-radius: 50px; /* Pill shape */
       display: flex;
       align-items: center;
       gap: 10px;
-      border: 1px solid #444;
+      border: 1px solid rgba(255,255,255,0.2);
       z-index: 999;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
-    .corner-logo img { height: 30px; width: auto; }
+    .corner-logo img { height: 25px; width: auto; }
+    .corner-logo span { font-size: 10px; opacity: 0.8; }
+
   </style>
 </head>
 <body>
 
 <div class="grid-main">
+    
     <div class="top-row">
         <div class="box" id="topSlideshow">
             <img src="https://laprensalatina.com/wp-content/uploads/2025/06/8-16-2024-1-scaled.avif" class="active">
@@ -113,7 +196,10 @@
         </div>
 
         <div class="box">
-            <div class="clock" id="clock">00:00:00 AM</div>
+            <div class="time-widget">
+                <div class="clock" id="clock">00:00</div>
+                <div class="date-display" id="date">Loading Date...</div>
+            </div>
         </div>
 
         <div class="box">
@@ -138,26 +224,41 @@
             </video>
         </div>
     </div>
+
+    <div class="ticker-container">
+        <div class="ticker-label">NEWS</div>
+        <div class="ticker-text">
+            Welcome to Wiemar Signage Pro &bull; Please check in at the front desk &bull; Upcoming Event: Community Gathering this Friday at 6:00 PM &bull; Visit our website for more information &bull; Have a wonderful day!
+        </div>
+    </div>
+
 </div>
 
 <div class="corner-logo">
     <img src="https://laprensalatina.com/wp-content/uploads/2025/07/Bilingual-Media-Logo-LIGHT.avif">
-    <span style="font-size: 12px;">Displays by Bilingual Media Group</span>
+    <span>Bilingual Media Group</span>
 </div>
 
 <script>
+    // --- CLOCK & DATE LOGIC ---
     function updateClock() {
         const now = new Date();
+        
+        // Time
         let h = now.getHours();
         const m = String(now.getMinutes()).padStart(2, '0');
-        const s = String(now.getSeconds()).padStart(2, '0');
         const ampm = h >= 12 ? 'PM' : 'AM';
         h = h % 12 || 12;
-        document.getElementById("clock").textContent = h + ":" + m + ":" + s + " " + ampm;
+        document.getElementById("clock").textContent = `${h}:${m} ${ampm}`;
+
+        // Date (New functionality)
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById("date").textContent = now.toLocaleDateString('en-US', options);
     }
     setInterval(updateClock, 1000);
     updateClock();
 
+    // --- SLIDESHOW LOGIC ---
     function startSlideshow(containerId, time) {
         const container = document.getElementById(containerId);
         const imgs = container.getElementsByTagName('img');
@@ -165,15 +266,20 @@
 
         setInterval(() => {
             if (imgs.length > 0) {
+                // Remove active class
                 imgs[index].classList.remove('active');
+                
+                // Calculate next index
                 index = (index + 1) % imgs.length;
+                
+                // Add active class
                 imgs[index].classList.add('active');
             }
         }, time);
     }
 
-    startSlideshow("topSlideshow", 5000);
-    startSlideshow("bottomSlideshow", 7000);
+    startSlideshow("topSlideshow", 5000); // 5 seconds
+    startSlideshow("bottomSlideshow", 8000); // 8 seconds (slightly slower for the zoom effect)
 </script>
 
 </body>
