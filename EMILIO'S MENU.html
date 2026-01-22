@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Digital Restaurante - 3 Pantallas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CONFIGURACIÓN GENERAL (LOOK BRUTAL) --- */
+        :root {
+            --bg-color: #121212; /* Negro suave */
+            --card-bg: #1e1e1e;
+            --accent-gold: #D4AF37; /* Dorado elegante */
+            --text-main: #ffffff;
+            --text-secondary: #aaaaaa;
+            --screen-gap: 20px; /* Espacio entre pantallas si están juntas */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #000;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text-main);
+            overflow: hidden; /* Evita scrollbars */
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- CONTENEDOR PRINCIPAL (GRID DE 3 PANTALLAS) --- */
+        #main-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* Tres columnas iguales */
+            height: 100%;
+            width: 100%;
+            gap: 4px; /* Una línea fina separadora */
+            background-color: #333; /* Color de las líneas separadoras */
+        }
+
+        /* --- ESTILO DE CADA PANTALLA INDIVIDUAL --- */
+        .screen {
+            background-color: var(--bg-color);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decoración de fondo sutil */
+        .screen::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at top right, rgba(212, 175, 55, 0.1), transparent 40%);
+            z-index: 0;
+        }
+
+        /* --- ENCABEZADOS DE PANTALLA --- */
+        .screen-header {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: var(--accent-gold);
+            text-align: center;
+            margin-bottom: 40px;
+            z-index: 1;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 2px solid var(--accent-gold);
+            padding-bottom: 10px;
+        }
+
+        /* --- LISTA DE PLATILLOS --- */
+        .menu-items {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            z-index: 1;
+            height: 100%;
+            overflow-y: auto; /* Permite scroll si hay muchos items, aunque idealmente no debería */
+        }
+
+        /* --- TARJETA DE PLATILLO (DISEÑO) --- */
+        .item-card {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.3s ease;
+            animation: fadeSlideIn 0.8s ease-out forwards;
+            opacity: 0; /* Empieza invisible para la animación */
+        }
+
+        .item-image {
+            width: 120px;
+            height: 120px;
+            object-fit: contain; /* Perfecto para PNGs sin fondo */
+            margin-right: 20px;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)); /* Sombra 3D a la imagen */
+            transition: transform 0.3s;
+        }
+
+        .item-details {
+            flex: 1;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 5px;
+            border-bottom: 1px dashed #444;
+            padding-bottom: 5px;
+        }
+
+        .item-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .item-price {
+            font-size: 1.6rem;
+            font-family: 'Playfair Display', serif;
+            color: var(--accent-gold);
+            font-weight: bold;
+        }
+
+        .item-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            line-height: 1.4;
+        }
+
+        /* --- ANIMACIONES --- */
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Loader */
+        #loading {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--accent-gold);
+            font-size: 2rem;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading">Cargando Menú...</div>
+
+    <div id="main-container">
+        <div class="screen" id="screen-left">
+            <h1 class="screen-header">Entradas</h1>
+            <div class="menu-items" id="list-left">
+                </div>
+        </div>
+
+        <div class="screen" id="screen-center">
+            <h1 class="screen-header">Platos Fuertes</h1>
+            <div class="menu-items" id="list-center">
+                </div>
+        </div>
+
+        <div class="screen" id="screen-right">
+            <h1 class="screen-header">Bebidas & Postres</h1>
+            <div class="menu-items" id="list-right">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURACIÓN: PEGA TU LINK CSV AQUÍ
+        // ==========================================
+        const SHEET_URL = 'PEGA_AQUI_TU_ENLACE_CSV_DE_GOOGLE_SHEETS';
+
+        // Función Principal
+        async function fetchMenuData() {
+            try {
+                if (SHEET_URL.includes('PEGA_AQUI')) {
+                    throw new Error("Por favor configura la URL del Google Sheet en el código.");
+                }
+
+                const response = await fetch(SHEET_URL);
+                const data = await response.text();
+                
+                // Convertir CSV a Array de objetos
+                const items = parseCSV(data);
+                
+                // Renderizar en las pantallas
+                renderMenu(items);
+
+                // Quitar pantalla de carga
+                document.getElementById('loading').style.display = 'none';
+
+            } catch (error) {
+                console.error("Error cargando el menú:", error);
+                document.getElementById('loading').innerText = "Error cargando datos. Verifica la consola.";
+            }
+        }
+
+        // Función simple para leer CSV
+        function parseCSV(csvText) {
+            const rows = csvText.split('\n').map(row => row.trim()).filter(row => row.length > 0);
+            const headers = rows[0].split(',').map(h => h.trim()); // Asumimos headers simples
+            
+            const result = [];
+            
+            // Empezamos desde 1 para saltar los encabezados
+            for (let i = 1; i < rows.length; i++) {
+                // Usamos una regex compleja para manejar comas dentro de comillas (ej: "Arroz, frijoles")
+                const values = rows[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                
+                // Si la fila está mal formada, la saltamos
+                if (!values) continue;
+
+                let obj = {};
+                // Mapear headers a valores, limpiando comillas extra
+                headers.forEach((header, index) => {
+                    let val = values[index] || "";
+                    val = val.replace(/^"|"$/g, '').trim(); // Quitar comillas
+                    obj[header] = val;
+                });
+                result.push(obj);
+            }
+            return result;
+        }
+
+        // Función para pintar el HTML
+        function renderMenu(items) {
+            // Limpiar listas actuales
+            document.getElementById('list-left').innerHTML = '';
+            document.getElementById('list-center').innerHTML = '';
+            document.getElementById('list-right').innerHTML = '';
+
+            let delayCounter = 0; // Para animación escalonada
+
+            items.forEach(item => {
+                // Verificar a qué pantalla va (left, center, right)
+                const screenId = `list-${item.Screen.toLowerCase()}`;
+                const container = document.getElementById(screenId);
+
+                if (container) {
+                    // Crear HTML de la tarjeta
+                    const card = document.createElement('div');
+                    card.className = 'item-card';
+                    card.style.animationDelay = `${delayCounter * 0.1}s`; // Retraso para efecto cascada
+
+                    // Si no hay imagen, usar un placeholder invisible o genérico
+                    const imgHtml = item.ImageURL 
+                        ? `<img src="${item.ImageURL}" class="item-image" alt="${item.Title}">` 
+                        : '';
+
+                    card.innerHTML = `
+                        ${imgHtml}
+                        <div class="item-details">
+                            <div class="item-header">
+                                <span class="item-title">${item.Title}</span>
+                                <span class="item-price">${item.Price}</span>
+                            </div>
+                            <div class="item-desc">${item.Description}</div>
+                        </div>
+                    `;
+
+                    container.appendChild(card);
+                    delayCounter++;
+                }
+            });
+        }
+
+        // Iniciar al cargar la página
+        window.onload = fetchMenuData;
+
+        // Opcional: Recargar automáticamente cada 5 minutos para ver cambios de precios
+        setInterval(fetchMenuData, 300000); 
+
+    </script>
+</body>
+</html>
