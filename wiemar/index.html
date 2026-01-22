@@ -2,66 +2,85 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Wiemar Signage Pro - Modern</title>
+  <title>Wiemar Signage Elite</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Oswald:wght@300;500&display=swap" rel="stylesheet">
 
   <style>
-    /* --- RESET & BASIC SETUP --- */
+    /* --- LUXURY RESET & VARIABLES --- */
+    :root {
+      --gold: #D4AF37;
+      --gold-dim: rgba(212, 175, 55, 0.3);
+      --glass: rgba(20, 20, 20, 0.75);
+      --bg-dark: #050505;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     body { 
       font-family: 'Montserrat', sans-serif; 
-      /* Dark Gradient Background instead of plain black */
-      background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-      color: white; 
+      background-color: var(--bg-dark);
+      color: #f0f0f0; 
       overflow: hidden; 
       width: 100vw; 
-      height: 100vh; 
+      height: 100vh;
+      /* Subtle animated gradient background */
+      background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #050505 100%);
+      background-size: 200% 200%;
+      animation: gradientBG 15s ease infinite;
     }
 
-    /* --- LAYOUT GRID --- */
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* --- MAIN LAYOUT --- */
     .grid-main {
       display: grid;
-      grid-template-rows: 48% 44% 6%; /* Top, Bottom, Ticker area */
+      grid-template-rows: 50% 44% 6%; /* Top, Bottom, Ticker */
       height: 100vh;
       width: 100vw;
-      gap: 10px;
-      padding: 10px;
+      gap: 15px;
+      padding: 20px;
     }
 
     .top-row {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
+      gap: 15px;
       height: 100%;
     }
 
     .bottom-row {
       display: grid;
-      grid-template-columns: 1.5fr 1fr; /* Left side slightly wider for photos */
-      gap: 10px;
+      grid-template-columns: 1.6fr 1fr; /* Golden Ratio-ish layout */
+      gap: 15px;
       height: 100%;
     }
 
-    /* --- MODERN CARD STYLING (Glass Effect) --- */
+    /* --- PREMIUM GLASS CARD --- */
     .box {
-      background: rgba(30, 30, 30, 0.6); /* Semi-transparent dark */
-      backdrop-filter: blur(10px); /* Frosted glass effect */
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 15px; /* Rounded corners */
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px; /* Sharper, more modern corners */
       position: relative;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      /* Subtle Golden Glow on edges */
+      border-bottom: 1px solid var(--gold-dim);
     }
 
-    /* --- IMAGE HANDLING --- */
+    /* --- IMAGES & ANIMATIONS --- */
     .box img {
       position: absolute;
       top: 0;
@@ -69,90 +88,104 @@
       width: 100%;
       height: 100%;
       opacity: 0;
-      transition: opacity 1s ease-in-out;
+      transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .box img.active {
-      opacity: 1;
-    }
+    .box img.active { opacity: 1; }
 
-    /* Top Slideshow: Contain (don't cut heads) */
+    /* Elegant Fit for Top Row */
     #topSlideshow img {
       object-fit: contain;
-      background: #000; /* Black bg for images that don't fill width */
+      padding: 10px; /* Frame it like art */
     }
 
-    /* Bottom Slideshow: Cover + Zoom Effect (Ken Burns) */
+    /* Cinematic Ken Burns for Bottom Row */
     #bottomSlideshow img {
       object-fit: cover;
-      transform: scale(1);
-      transition: opacity 1s ease-in-out, transform 10s linear;
+      transform: scale(1.0);
+      transition: opacity 1.5s, transform 12s;
     }
     #bottomSlideshow img.active {
-      transform: scale(1.1); /* Slow zoom in */
+      transform: scale(1.15); /* Slow elegant zoom */
     }
 
-    /* --- CLOCK & DATE WIDGET --- */
+    /* --- LUXURY TIMEPIECE --- */
     .time-widget {
       text-align: center;
       z-index: 2;
+      border: 1px solid var(--gold-dim);
+      padding: 20px 40px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.3);
     }
+    
     .clock {
       font-family: 'Oswald', sans-serif;
-      font-size: 5vw;
-      font-weight: 700;
+      font-size: 5.5vw;
+      font-weight: 300; /* Thinner is more elegant */
       color: #fff;
-      text-shadow: 0 0 10px rgba(0, 255, 255, 0.5); /* Neon glow */
+      letter-spacing: 2px;
       line-height: 1;
     }
+    
     .date-display {
-      font-size: 1.2vw;
-      color: #ccc;
-      margin-top: 10px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
+      font-family: 'Playfair Display', serif; /* Serif font for elegance */
+      font-style: italic;
+      font-size: 1.4vw;
+      color: var(--gold);
+      margin-top: 5px;
+      letter-spacing: 1px;
     }
 
-    /* --- VIDEO --- */
+    /* --- VIDEO STYLING --- */
     video {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 15px;
+      opacity: 0.9;
     }
 
-    /* --- SCROLLING TICKER (New Feature) --- */
+    /* --- LIVE NEWS TICKER --- */
     .ticker-container {
-      grid-column: 1 / -1; /* Span full width */
-      background: #b90000; /* Dark Red background for attention */
+      grid-column: 1 / -1;
+      background: linear-gradient(90deg, #111 0%, #222 50%, #111 100%);
+      border-top: 1px solid var(--gold);
+      border-bottom: 1px solid var(--gold-dim);
       display: flex;
       align-items: center;
       overflow: hidden;
-      white-space: nowrap;
-      border-radius: 8px;
       position: relative;
-      box-shadow: 0 0 10px rgba(185, 0, 0, 0.4);
     }
     
     .ticker-label {
-      background: #fff;
-      color: #b90000;
-      padding: 0 20px;
+      background: var(--gold);
+      color: #000;
+      padding: 0 30px;
       height: 100%;
       display: flex;
       align-items: center;
-      font-weight: bold;
+      font-family: 'Oswald', sans-serif;
+      font-weight: 500;
+      text-transform: uppercase;
       font-size: 1.2rem;
       z-index: 10;
-      box-shadow: 5px 0 10px rgba(0,0,0,0.3);
+      box-shadow: 5px 0 20px rgba(0,0,0,0.5);
+    }
+
+    .ticker-wrapper {
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
     }
 
     .ticker-text {
       display: inline-block;
       padding-left: 100%;
-      animation: marquee 20s linear infinite;
-      font-size: 1.2rem;
-      font-weight: 500;
+      animation: marquee 35s linear infinite; /* Slower for readability */
+      font-size: 1.1rem;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+      color: #fff;
     }
 
     @keyframes marquee {
@@ -160,24 +193,28 @@
       100% { transform: translate(-100%, 0); }
     }
 
-    /* --- CORNER LOGO --- */
+    /* --- BRANDING --- */
     .corner-logo {
       position: fixed;
-      bottom: 80px; /* Moved up slightly to clear the ticker */
-      right: 20px;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(5px);
-      padding: 8px 15px;
-      border-radius: 50px; /* Pill shape */
+      bottom: 85px; 
+      right: 30px;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 8px 20px;
+      border: 1px solid #333;
+      border-radius: 4px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      border: 1px solid rgba(255,255,255,0.2);
+      gap: 12px;
       z-index: 999;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     }
-    .corner-logo img { height: 25px; width: auto; }
-    .corner-logo span { font-size: 10px; opacity: 0.8; }
+    .corner-logo img { height: 28px; width: auto; filter: grayscale(100%) brightness(200%); } /* Make logo white/silver */
+    .corner-logo span { 
+      font-size: 10px; 
+      color: #aaa; 
+      text-transform: uppercase; 
+      letter-spacing: 1px; 
+    }
 
   </style>
 </head>
@@ -198,7 +235,7 @@
         <div class="box">
             <div class="time-widget">
                 <div class="clock" id="clock">00:00</div>
-                <div class="date-display" id="date">Loading Date...</div>
+                <div class="date-display" id="date">Loading...</div>
             </div>
         </div>
 
@@ -226,9 +263,11 @@
     </div>
 
     <div class="ticker-container">
-        <div class="ticker-label">NEWS</div>
-        <div class="ticker-text">
-            Welcome to Wiemar Signage Pro &bull; Please check in at the front desk &bull; Upcoming Event: Community Gathering this Friday at 6:00 PM &bull; Visit our website for more information &bull; Have a wonderful day!
+        <div class="ticker-label">WORLD NEWS</div>
+        <div class="ticker-wrapper">
+            <div class="ticker-text" id="news-ticker">
+                Connecting to World News Satellites... Please Wait...
+            </div>
         </div>
     </div>
 
@@ -240,47 +279,10 @@
 </div>
 
 <script>
-    // --- CLOCK & DATE LOGIC ---
+    // --- 1. CLOCK & DATE ---
     function updateClock() {
         const now = new Date();
-        
-        // Time
         let h = now.getHours();
         const m = String(now.getMinutes()).padStart(2, '0');
         const ampm = h >= 12 ? 'PM' : 'AM';
         h = h % 12 || 12;
-        document.getElementById("clock").textContent = `${h}:${m} ${ampm}`;
-
-        // Date (New functionality)
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById("date").textContent = now.toLocaleDateString('en-US', options);
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // --- SLIDESHOW LOGIC ---
-    function startSlideshow(containerId, time) {
-        const container = document.getElementById(containerId);
-        const imgs = container.getElementsByTagName('img');
-        let index = 0;
-
-        setInterval(() => {
-            if (imgs.length > 0) {
-                // Remove active class
-                imgs[index].classList.remove('active');
-                
-                // Calculate next index
-                index = (index + 1) % imgs.length;
-                
-                // Add active class
-                imgs[index].classList.add('active');
-            }
-        }, time);
-    }
-
-    startSlideshow("topSlideshow", 5000); // 5 seconds
-    startSlideshow("bottomSlideshow", 8000); // 8 seconds (slightly slower for the zoom effect)
-</script>
-
-</body>
-</html>
