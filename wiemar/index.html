@@ -1,288 +1,359 @@
 <!DOCTYPE html>
+
 <html lang="es">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>Wiemar Signage Elite</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Oswald:wght@300;500&display=swap" rel="stylesheet">
 
-  <style>
-    /* --- LUXURY RESET & VARIABLES --- */
-    :root {
-      --gold: #D4AF37;
-      --gold-dim: rgba(212, 175, 55, 0.3);
-      --glass: rgba(20, 20, 20, 0.75);
-      --bg-dark: #050505;
-    }
+<meta charset="UTF-8" />
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body { 
-      font-family: 'Montserrat', sans-serif; 
-      background-color: var(--bg-dark);
-      color: #f0f0f0; 
-      overflow: hidden; 
-      width: 100vw; 
-      height: 100vh;
-      /* Subtle animated gradient background */
-      background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #050505 100%);
-      background-size: 200% 200%;
-      animation: gradientBG 15s ease infinite;
-    }
+<title>Wiemar Signage Pro</title>
 
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+<style>
 
-    /* --- MAIN LAYOUT --- */
-    .grid-main {
-      display: grid;
-      grid-template-rows: 50% 44% 6%; /* Top, Bottom, Ticker */
-      height: 100vh;
-      width: 100vw;
-      gap: 15px;
-      padding: 20px;
-    }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .top-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 15px;
-      height: 100%;
-    }
+body { font-family: Arial, sans-serif; background: #000; color: white; overflow: hidden; width: 100vw; height: 100vh; }
 
-    .bottom-row {
-      display: grid;
-      grid-template-columns: 1.6fr 1fr; /* Golden Ratio-ish layout */
-      gap: 15px;
-      height: 100%;
-    }
 
-    /* --- PREMIUM GLASS CARD --- */
-    .box {
-      background: var(--glass);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 8px; /* Sharper, more modern corners */
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-      /* Subtle Golden Glow on edges */
-      border-bottom: 1px solid var(--gold-dim);
-    }
 
-    /* --- IMAGES & ANIMATIONS --- */
-    .box img {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+/* Estructura principal */
 
-    .box img.active { opacity: 1; }
+.grid-main {
 
-    /* Elegant Fit for Top Row */
-    #topSlideshow img {
-      object-fit: contain;
-      padding: 10px; /* Frame it like art */
-    }
+display: grid;
 
-    /* Cinematic Ken Burns for Bottom Row */
-    #bottomSlideshow img {
-      object-fit: cover;
-      transform: scale(1.0);
-      transition: opacity 1.5s, transform 12s;
-    }
-    #bottomSlideshow img.active {
-      transform: scale(1.15); /* Slow elegant zoom */
-    }
+grid-template-rows: 50% 50%;
 
-    /* --- LUXURY TIMEPIECE --- */
-    .time-widget {
-      text-align: center;
-      z-index: 2;
-      border: 1px solid var(--gold-dim);
-      padding: 20px 40px;
-      border-radius: 4px;
-      background: rgba(0,0,0,0.3);
-    }
-    
-    .clock {
-      font-family: 'Oswald', sans-serif;
-      font-size: 5.5vw;
-      font-weight: 300; /* Thinner is more elegant */
-      color: #fff;
-      letter-spacing: 2px;
-      line-height: 1;
-    }
-    
-    .date-display {
-      font-family: 'Playfair Display', serif; /* Serif font for elegance */
-      font-style: italic;
-      font-size: 1.4vw;
-      color: var(--gold);
-      margin-top: 5px;
-      letter-spacing: 1px;
-    }
+height: 100vh;
 
-    /* --- VIDEO STYLING --- */
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0.9;
-    }
+width: 100vw;
 
-    /* --- LIVE NEWS TICKER --- */
-    .ticker-container {
-      grid-column: 1 / -1;
-      background: linear-gradient(90deg, #111 0%, #222 50%, #111 100%);
-      border-top: 1px solid var(--gold);
-      border-bottom: 1px solid var(--gold-dim);
-      display: flex;
-      align-items: center;
-      overflow: hidden;
-      position: relative;
-    }
-    
-    .ticker-label {
-      background: var(--gold);
-      color: #000;
-      padding: 0 30px;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      font-family: 'Oswald', sans-serif;
-      font-weight: 500;
-      text-transform: uppercase;
-      font-size: 1.2rem;
-      z-index: 10;
-      box-shadow: 5px 0 20px rgba(0,0,0,0.5);
-    }
+gap: 5px;
 
-    .ticker-wrapper {
-      width: 100%;
-      overflow: hidden;
-      white-space: nowrap;
-    }
+padding: 5px;
 
-    .ticker-text {
-      display: inline-block;
-      padding-left: 100%;
-      animation: marquee 35s linear infinite; /* Slower for readability */
-      font-size: 1.1rem;
-      font-weight: 300;
-      letter-spacing: 0.5px;
-      color: #fff;
-    }
+}
 
-    @keyframes marquee {
-      0% { transform: translate(0, 0); }
-      100% { transform: translate(-100%, 0); }
-    }
 
-    /* --- BRANDING --- */
-    .corner-logo {
-      position: fixed;
-      bottom: 85px; 
-      right: 30px;
-      background: rgba(0, 0, 0, 0.85);
-      padding: 8px 20px;
-      border: 1px solid #333;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 999;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    }
-    .corner-logo img { height: 28px; width: auto; filter: grayscale(100%) brightness(200%); } /* Make logo white/silver */
-    .corner-logo span { 
-      font-size: 10px; 
-      color: #aaa; 
-      text-transform: uppercase; 
-      letter-spacing: 1px; 
-    }
 
-  </style>
+.top-row {
+
+display: grid;
+
+grid-template-columns: 1fr 1fr 1fr;
+
+gap: 5px;
+
+height: 100%;
+
+}
+
+
+
+.bottom-row {
+
+display: grid;
+
+grid-template-columns: 1fr 1fr;
+
+gap: 5px;
+
+height: 100%;
+
+}
+
+
+
+/* Cajas contenedoras seguras */
+
+.box {
+
+background: #000;
+
+position: relative;
+
+overflow: hidden; /* Esto evita que cualquier imagen rompa el cuadro */
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+width: 100%;
+
+height: 100%;
+
+}
+
+
+
+/* Ajuste de Imágenes */
+
+.box img {
+
+position: absolute;
+
+top: 0;
+
+left: 0;
+
+width: 100%;
+
+height: 100%;
+
+opacity: 0;
+
+transition: opacity 0.5s ease-in-out;
+
+}
+
+
+
+/* Arriba: No corta cabezas */
+
+#topSlideshow img {
+
+object-fit: contain;
+
+}
+
+
+
+/* Abajo: Llena el cuadro pero SIN SALIRSE */
+
+#bottomSlideshow img {
+
+object-fit: cover;
+
+max-width: 100%;
+
+max-height: 100%;
+
+}
+
+
+
+.box img.active {
+
+opacity: 1;
+
+}
+
+
+
+.clock {
+
+font-size: 5.5vw;
+
+font-family: 'Impact', sans-serif;
+
+font-weight: bold;
+
+color: #fff;
+
+}
+
+
+
+video {
+
+width: 100%;
+
+height: 100%;
+
+object-fit: cover;
+
+}
+
+
+
+.corner-logo {
+
+position: fixed;
+
+bottom: 15px;
+
+right: 15px;
+
+background: rgba(0, 0, 0, 0.8);
+
+padding: 10px;
+
+border-radius: 8px;
+
+display: flex;
+
+align-items: center;
+
+gap: 10px;
+
+border: 1px solid #444;
+
+z-index: 999;
+
+}
+
+.corner-logo img { height: 30px; width: auto; }
+
+</style>
+
 </head>
+
 <body>
 
+
+
 <div class="grid-main">
-    
-    <div class="top-row">
-        <div class="box" id="topSlideshow">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/8-16-2024-1-scaled.avif" class="active">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/9-11-24a.avif">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/11-24-24-3-scaled.avif">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/10/1000062696.avif">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/10/1000062697.avif">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/428670563_10230655054537699_4663040450853901336_n.avif">
-        </div>
 
-        <div class="box">
-            <div class="time-widget">
-                <div class="clock" id="clock">00:00</div>
-                <div class="date-display" id="date">Loading...</div>
-            </div>
-        </div>
+<div class="top-row">
 
-        <div class="box">
-            <video autoplay muted loop playsinline>
-                <source src="https://laprensalatina.com/wp-content/uploads/2025/06/wiemars-logo-diamant-video.mp4" type="video/mp4">
-            </video>
-        </div>
-    </div>
+<div class="box" id="topSlideshow">
 
-    <div class="bottom-row">
-        <div class="box" id="bottomSlideshow">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/481052234_10234215243780205_7307714604725075650_n.avif" class="active">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/480239285_1080051100593439_481976388239871683_n.avif">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/DSC05749-scaled.avif">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/DSC06662.avif">
-            <img src="https://laprensalatina.com/wp-content/uploads/2025/06/492487653_1135465708385311_986035875599615656_n.avif">
-        </div>
+<img src="https://laprensalatina.com/wp-content/uploads/2025/06/8-16-2024-1-scaled.avif" class="active">
 
-        <div class="box">
-            <video autoplay muted loop playsinline>
-                <source src="https://laprensalatina.com/wp-content/uploads/2025/11/BTV-for-Ablesign-v2.mp4" type="video/mp4">
-            </video>
-        </div>
-    </div>
+<img src="https://laprensalatina.com/wp-content/uploads/2025/06/9-11-24a.avif">
 
-    <div class="ticker-container">
-        <div class="ticker-label">WORLD NEWS</div>
-        <div class="ticker-wrapper">
-            <div class="ticker-text" id="news-ticker">
-                Connecting to World News Satellites... Please Wait...
-            </div>
-        </div>
-    </div>
+<img src="https://laprensalatina.com/wp-content/uploads/2025/06/11-24-24-3-scaled.avif">
+
+<img src="https://laprensalatina.com/wp-content/uploads/2025/10/1000062696.avif">
+
+<img src="https://laprensalatina.com/wp-content/uploads/2025/10/1000062697.avif">
+
+<img src="https://laprensalatina.com/wp-content/uploads/2025/06/428670563_10230655054537699_4663040450853901336_n.avif">
 
 </div>
+
+
+
+<div class="box">
+
+<div class="clock" id="clock">00:00:00 AM</div>
+
+</div>
+
+
+
+<div class="box">
+
+<video autoplay muted loop playsinline>
+
+<source src="https://laprensalatina.com/wp-content/uploads/2025/06/wiemars-logo-diamant-video.mp4" type="video/mp4">
+
+</video>
+
+</div>
+
+</div>
+
+
+
+<div class="bottom-row">
+
+<div class="box" id="bottomSlideshow">
+
+<img src="https://laprensalatina.com/wp-content/uploads/2025/06/481052234_10234215243780205_7307714604725075650_n.avif" class="active">
+
+<img src="https://laprensalatina.com/wp-content/uploads/2025/06/480239285_1080051100593439_481976388239871683_n.avif">
+
+<img src="https://laprensalatina.com/wp-content/uploads/2025/06/DSC05749-scaled.avif">
+
+<img src="https://laprensalatina.com/wp-content/uploads/2025/06/DSC06662.avif">
+
+<img src="https://laprensalatina.com/wp-content/uploads/2025/06/492487653_1135465708385311_986035875599615656_n.avif">
+
+</div>
+
+
+
+<div class="box">
+
+<video autoplay muted loop playsinline>
+
+<source src="https://laprensalatina.com/wp-content/uploads/2025/11/BTV-for-Ablesign-v2.mp4" type="video/mp4">
+
+</video>
+
+</div>
+
+</div>
+
+</div>
+
+
 
 <div class="corner-logo">
-    <img src="https://laprensalatina.com/wp-content/uploads/2025/07/Bilingual-Media-Logo-LIGHT.avif">
-    <span>Bilingual Media Group</span>
+
+<img src="https://laprensalatina.com/wp-content/uploads/2025/07/Bilingual-Media-Logo-LIGHT.avif">
+
+<span style="font-size: 12px;">Displays by Bilingual Media Group</span>
+
 </div>
 
+
+
 <script>
-    // --- 1. CLOCK & DATE ---
-    function updateClock() {
-        const now = new Date();
-        let h = now.getHours();
-        const m = String(now.getMinutes()).padStart(2, '0');
-        const ampm = h >= 12 ? 'PM' : 'AM';
-        h = h % 12 || 12;
+
+function updateClock() {
+
+const now = new Date();
+
+let h = now.getHours();
+
+const m = String(now.getMinutes()).padStart(2, '0');
+
+const s = String(now.getSeconds()).padStart(2, '0');
+
+const ampm = h >= 12 ? 'PM' : 'AM';
+
+h = h % 12 || 12;
+
+document.getElementById("clock").textContent = h + ":" + m + ":" + s + " " + ampm;
+
+}
+
+setInterval(updateClock, 1000);
+
+updateClock();
+
+
+
+function startSlideshow(containerId, time) {
+
+const container = document.getElementById(containerId);
+
+const imgs = container.getElementsByTagName('img');
+
+let index = 0;
+
+
+
+setInterval(() => {
+
+if (imgs.length > 0) {
+
+imgs[index].classList.remove('active');
+
+index = (index + 1) % imgs.length;
+
+imgs[index].classList.add('active');
+
+}
+
+}, time);
+
+}
+
+
+
+startSlideshow("topSlideshow", 5000);
+
+startSlideshow("bottomSlideshow", 7000);
+
+</script>
+
+
+
+</body>
+
+</html>
