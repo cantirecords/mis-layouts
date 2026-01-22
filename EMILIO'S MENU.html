@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menú Pro - Anti Flicker System</title>
+    <title>Menú Pro - Sistema Blindado</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Oswald:wght@400;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
     
     <style>
@@ -30,31 +30,42 @@
 
         .dynamic-header { text-align: center; margin-bottom: 30px; }
         .dynamic-header h1 {
-            font-family: 'Oswald', sans-serif; font-size: 3.5rem;
+            font-family: 'Oswald', sans-serif; font-size: 3.8rem;
             text-transform: uppercase; color: var(--accent-gold);
             border-bottom: 4px solid var(--accent-gold); display: inline-block;
+            letter-spacing: 3px;
         }
 
         .menu-items { flex: 1; display: flex; flex-direction: column; gap: 20px; }
 
-        /* Tarjeta con transición muy suave para que el cambio no sea brusco */
+        /* Tarjeta de Item */
         .item-card {
             display: flex; align-items: center;
             background: rgba(255,255,255,0.03);
             border-radius: 20px; padding: 15px;
             border: 1px solid rgba(255,255,255,0.05);
-            transition: opacity 0.8s ease, transform 0.8s ease;
         }
 
-        /* Animaciones */
+        /* Animaciones Solicitadas */
         .anim-float { animation: floating 4s ease-in-out infinite; }
         .anim-pulse { animation: pulsing 3s ease-in-out infinite; }
         @keyframes floating { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-        @keyframes pulsing { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes pulsing { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 
         .item-image { object-fit: contain; margin-right: 25px; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8)); }
         .item-info { flex: 1; }
         .info-top { display: flex; justify-content: space-between; align-items: center; }
+
+        /* Estilo de Precio XL */
+        .price-tag {
+            font-family: 'Playfair Display', serif;
+            color: var(--accent-gold);
+            font-weight: 900;
+            background: rgba(197,160,89,0.15);
+            padding: 5px 15px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(197,160,89,0.1);
+        }
 
         #loader {
             position: fixed; inset: 0; background: #000; z-index: 999;
@@ -76,42 +87,38 @@
     <script>
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSOqSm0ui8t7mSCLE27bPhPB4rnYSaEY8o4wZiriYZrY4SteoXl-nYF6kc6cRY6qvp5htsfK7NKQ1d3/pub?output=csv';
 
-        let currentDataHash = ""; 
+        // MEMORIA DEL SISTEMA
+        let currentDataHash = "";  // Lo que se ve ahora
+        let previousDataHash = ""; // El historial para evitar regresiones
 
-        async function fetchData() {
-            // Agregamos un timestamp para saltar el caché del navegador
-            const response = await fetch(`${SHEET_URL}&nocache=${new Date().getTime()}`);
-            return await response.text();
-        }
-
-        async function checkAndUpdate() {
+        async function updateSystem() {
             try {
-                const newData = await fetchData();
+                // Forzamos a Google a darnos lo más nuevo
+                const response = await fetch(`${SHEET_URL}&t=${new Date().getTime()}`);
+                const newData = await response.text();
 
-                // Si los datos son diferentes a lo que tenemos en pantalla...
-                if (newData !== currentDataHash) {
-                    
-                    // ESPERA DE SEGURIDAD: 
-                    // Si detectamos un cambio, esperamos 3 segundos y volvemos a preguntar.
-                    // Esto asegura que el servidor de Google ya esté estable con el dato nuevo.
-                    setTimeout(async () => {
-                        const confirmData = await fetchData();
-                        
-                        if (confirmData === newData) {
-                            // Si la segunda vez obtenemos lo mismo, el cambio es real y estable.
-                            currentDataHash = newData;
-                            const items = parseCSV(newData);
-                            applyToUI(items);
-                        } else {
-                            // Si la segunda vez regresó al anterior, ignoramos para evitar el "flicker"
-                            console.log("Cambio inestable detectado. Ignorando para evitar parpadeo.");
-                        }
-                    }, 3000); 
+                // REGLAS ANTI-ERRORES DE GOOGLE:
+                // 1. Si el dato es igual al que ya tengo, no hago nada.
+                if (newData === currentDataHash) return;
+
+                // 2. Si el dato es igual al ANTERIOR (regresión), lo bloqueo.
+                if (newData === previousDataHash && currentDataHash !== "") {
+                    console.warn("Google intentó enviar un precio viejo. Bloqueado.");
+                    return;
                 }
-            } catch (e) { console.error("Error:", e); }
+
+                // 3. Si llegamos aquí, es un cambio nuevo y genuino.
+                // Guardamos el actual en el historial antes de actualizar.
+                previousDataHash = currentDataHash;
+                currentDataHash = newData;
+
+                const items = parseCSV(newData);
+                applyUI(items);
+
+            } catch (e) { console.error("Error de red:", e); }
         }
 
-        function applyToUI(items) {
+        function applyUI(items) {
             const urlParams = new URLSearchParams(window.location.search);
             const solo = urlParams.get('screen');
 
@@ -127,14 +134,14 @@
                 renderScreen('right', items.filter(i => i.Screen.toLowerCase() === 'right'));
             }
 
-            document.getElementById('loader').style.opacity = '0';
-            setTimeout(() => { document.getElementById('loader').style.display = 'none'; }, 500);
+            document.getElementById('loader').style.display = 'none';
         }
 
         function renderScreen(side, items) {
             const list = document.getElementById(`list-${side}`);
             const header = document.querySelector(`#sc-${side} h1`);
             if (items.length === 0) return;
+            
             header.innerText = items[0].ScreenTitle;
             list.innerHTML = '';
 
@@ -143,8 +150,8 @@
                 card.className = 'item-card';
                 
                 const font = item.FontFamily || 'Montserrat';
-                const imgSize = item.ImageSize || '130';
-                const priceSize = item.PriceSize || '2.5';
+                const imgSize = item.ImageSize || '140';
+                const priceSize = item.PriceSize || '2.8';
                 const anim = (item.Animation || 'none').toLowerCase();
                 let animClass = anim === 'float' ? 'anim-float' : (anim === 'pulse' ? 'anim-pulse' : '');
 
@@ -152,12 +159,12 @@
                     <img src="${item.ImageURL}" class="item-image ${animClass}" style="width: ${imgSize}px; height: ${imgSize}px;">
                     <div class="item-info" style="font-family: '${font}', sans-serif;">
                         <div class="info-top">
-                            <span style="font-size: 1.7rem; font-weight: 900; text-transform: uppercase;">${item.ItemTitle}</span>
-                            <span style="font-family: 'Playfair Display'; font-size: ${priceSize}rem; color: #c5a059; font-weight: 900; background: rgba(197,160,89,0.1); padding: 5px 15px; border-radius: 10px;">
+                            <span style="font-size: 1.8rem; font-weight: 900; text-transform: uppercase;">${item.ItemTitle}</span>
+                            <span class="price-tag" style="font-size: ${priceSize}rem;">
                                 ${item.Price}
                             </span>
                         </div>
-                        <p style="color: #aaa; font-style: italic; font-size: 1.1rem; margin-top: 8px;">${item.Description}</p>
+                        <p style="color: #bbb; font-style: italic; font-size: 1.2rem; margin-top: 10px; max-width: 85%;">${item.Description}</p>
                     </div>
                 `;
                 list.appendChild(card);
@@ -178,11 +185,11 @@
             });
         }
 
-        // Ejecutar inmediatamente al cargar
-        checkAndUpdate();
+        // Iniciar inmediatamente
+        updateSystem();
         
-        // Revisar cada 15 segundos (más saludable para los servidores de Google)
-        setInterval(checkAndUpdate, 15000); 
+        // Revisar cambios cada 20 segundos
+        setInterval(updateSystem, 20000); 
 
     </script>
 </body>
