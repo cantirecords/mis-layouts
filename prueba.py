@@ -1,31 +1,46 @@
+import pandas as pd
 import pywhatkit
 import time
 
-# --- CONFIGURACIÓN DE LA PRUEBA ---
-# Escribe tu número con el signo + y tu código de país (ejemplo: +52 para México, +34 para España)
-tu_numero = "+19012065004" 
-mensaje_de_prueba = "¡Funciona! Este es un mensaje automático enviado desde Python 🐍"
+# --- CONFIGURACIÓN ---
+# 1. Pega aquí el enlace que copiaste al "Publicar en la web" de Google Sheets
+URL_GOOGLE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT8GptzYyGiULyjqQ188poL8yx2w0wjgpEicFH_FvxJCwcsTBlI9fpK4fkdKAS3TnPcYW5YWTmYI7GA/pub?output=csv"
 
-print("Iniciando prueba en 5 segundos...")
-time.sleep(5)
+def revisar_google_sheets():
+    try:
+        # Lee la hoja de Google Sheets directamente de internet
+        df = pd.read_csv(URL_GOOGLE_SHEET)
+        
+        # Buscamos: Estado sea 'Confirmada' Y Enviado NO sea 'SI'
+        filas_a_notificar = df[(df['Estado'] == 'Confirmada') & (df['Enviado'] != 'SI')]
 
-try:
-    # Esta es la función mágica. 
-    # wait_time=15: Espera 15 segundos a que cargue WhatsApp Web antes de escribir.
-    # tab_close=True: Cierra la pestaña del navegador automáticamente después de enviar.
-    print("Abriendo el navegador y preparando el envío...")
-    
-    pywhatkit.sendwhatmsg_instantly(
-        phone_no=tu_numero, 
-        message=mensaje_de_prueba,
-        wait_time=15,
-        tab_close=True
-    )
-    
-    print("--------------------------------------------------")
-    print("¡LISTO! Si todo salió bien, verás tu mensaje en WhatsApp.")
-    print("Recuerda: No muevas el ratón mientras el código escribe.")
-    print("--------------------------------------------------")
+        if filas_a_notificar.empty:
+            print("No hay citas confirmadas nuevas por enviar.")
+            return
 
-except Exception as e:
-    print(f"Ocurrió un error: {e}")
+        for index, fila in filas_a_notificar.iterrows():
+            nombre = fila['Nombre']
+            telefono = str(fila['Telefono'])
+            
+            # Mensaje personalizado con el nombre
+            mensaje = f"Hola {nombre}, ¡tu cita ha sido CONFIRMADA con éxito! Te esperamos."
+
+            print(f"Enviando confirmación a {nombre}...")
+            
+            # Envía el mensaje
+            pywhatkit.sendwhatmsg_instantly(telefono, mensaje, wait_time=15, tab_close=True)
+            
+            print(f"✅ Mensaje enviado a {nombre}. Recuerda marcar manualmente 'SI' en la columna Enviado de tu Sheet.")
+            
+            # Espera para no saturar WhatsApp
+            time.sleep(10)
+
+    except Exception as e:
+        print(f"Error al leer la hoja: {e}")
+
+# --- INICIO DEL PROGRAMA ---
+print("Sistema de Vigilancia de Google Sheets Activado...")
+while True:
+    revisar_google_sheets()
+    # Revisa la hoja cada 60 segundos
+    time.sleep(60)
