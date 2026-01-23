@@ -8,7 +8,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 # --- CONFIGURACIÓN ---
 # Tu link de Google Sheets (el que termina en .csv)
-URL_GOOGLE_SHEET = "Thttps://docs.google.com/spreadsheets/d/e/2PACX-1vT8GptzYyGiULyjqQ188poL8yx2w0wjgpEicFH_FvxJCwcsTBlI9fpK4fkdKAS3TnPcYW5YWTmYI7GA/pubhtml"
+URL_GOOGLE_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT8GptzYyGiULyjqQ188poL8yx2w0wjgpEicFH_FvxJCwcsTBlI9fpK4fkdKAS3TnPcYW5YWTmYI7GA/pubhtml"
 
 def revisar_google_sheets():
     try:
