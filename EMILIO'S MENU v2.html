@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emilio's Grocery - Menú Digital Final</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* ===================================================================== */
+            /* 🛠️ PANEL DE CONTROL GLOBAL / GLOBAL CONTROL PANEL 🛠️               */
+            /* ===================================================================== */
+
+            /* --- 1. TAMAÑO DE LAS IMÁGENES / IMAGE SIZES --- */
+            --img-size-left: 350px;   /* Tamaño GENERAL Izquierda */
+            --img-size-right: 300px;  /* Tamaño GENERAL Derecha */
+
+            /* --- 2. POSICIÓN DE LA IMAGEN / IMAGE POSITION --- */
+            --img-offset-y-left: 150px;   
+            --img-offset-y-right: 120px;  
+
+            /* --- 3. ESPACIO ENTRE FILAS / ROW GAP --- */
+            --row-gap-left: 200px;   
+            --row-gap-right: 80px;  
+
+            /* --- 4. TAMAÑO DE LOS TEXTOS / TEXT SIZES --- */
+            --text-title: 40px;  /* Ajustado un poco para que quepan nombres largos */
+            --text-price: 35px;  
+            
+            /* --- 5. CONTROL DE LA BEBIDA (AGUAS) --- */
+            --aguas-size: 300px; /* Tamaño de la foto de las aguas */
+            --aguas-right: 0px; /* Qué tan a la derecha está */
+            --aguas-bottom: 20px; /* Qué tan abajo está */
+
+            /* ===================================================================== */
+            /* COLORES DEL SISTEMA */
+            /* ===================================================================== */
+            --red-main: #E31837;
+            --red-dark: #C1101D;
+            --yellow-main: #FFF000;
+            --green-main: #00843D;
+            --white: #ffffff;
+            --text-grey: #555555;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: #111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+        }
+
+        #preview-wrapper { transform-origin: top center; padding: 20px 0; }
+        #screens-container { display: flex; flex-direction: column; gap: 40px; }
+
+        /* CONFIGURACIÓN EXACTA 16:9 (1080p) */
+        .screen {
+            width: 1920px;
+            height: 1080px;
+            background-color: var(--red-main);
+            position: relative;
+            overflow: hidden; 
+            display: flex;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.8);
+        }
+
+        .bg-dots {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: radial-gradient(var(--red-dark) 15%, transparent 16%);
+            background-size: 25px 25px;
+            z-index: 1;
+        }
+
+        /* --- LAYOUT PANTALLAS --- */
+        .screen-left-content { width: 72%; height: 100%; position: relative; z-index: 2; padding: 20px; display: flex; flex-direction: column; }
+        .screen-right-sidebar { width: 30%; height: 100%; background-color: var(--yellow-main); position: relative; z-index: 2; padding: 30px 40px; display: flex; flex-direction: column; align-items: center; box-shadow: -10px 0 30px rgba(0,0,0,0.2); }
+        
+        /* PANTALLA DERECHA: SE REDUJO EL PADDING SUPERIOR PARA SUBIR TODO */
+        .screen-full-content { width: 100%; height: 100%; position: relative; z-index: 2; padding: 20px 40px 40px 40px; display: flex; flex-direction: column; }
+
+        /* --- HEADER --- */
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-shrink: 0; }
+        .main-title { font-family: 'Fredoka', sans-serif; font-size: 60px; color: var(--white); text-shadow: 4px 4px 0px var(--red-dark), 8px 8px 15px rgba(0,0,0,0.4); letter-spacing: 2px; line-height: 1; }
+        .order-online-btn { background-color: var(--green-main); color: white; padding: 12px 25px; border-radius: 50px; font-size: 20px; font-weight: 800; text-transform: uppercase; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+
+        .papel-picado-border { width: 100%; height: 15px; background-image: linear-gradient(90deg, #FF007F 25%, #00E5FF 25%, #00E5FF 50%, #FFEA00 50%, #FFEA00 75%, #00E676 75%); background-size: 80px 100%; margin-bottom: 25px; border-radius: 10px; opacity: 0.9; flex-shrink: 0; }
+
+        /* --- GRIDS --- */
+        #grid-estilos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; row-gap: var(--row-gap-left); margin-top: calc(var(--img-size-left) / 2 - 20px); }
+        #grid-especialidades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; row-gap: var(--row-gap-right); margin-top: calc(var(--img-size-right) / 2 - 20px); }
+
+        .food-card-wrapper { position: relative; display: flex; flex-direction: column; justify-content: flex-end; }
+
+        .food-text-box { background: var(--white); border-radius: 30px; padding: 50px 15px 15px 15px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.3); min-height: 150px; display: flex; flex-direction: column; justify-content: flex-end; position: relative; z-index: 1; }
+
+        .food-image { position: absolute; left: 50%; transform: translateX(-50%); object-fit: contain; filter: drop-shadow(0 15px 10px rgba(0,0,0,0.4)); z-index: 10; animation: superSlowFloat 8s ease-in-out infinite; }
+
+        /* TEXTOS DE LA TARJETA */
+        .food-card-title { font-family: 'Fredoka', sans-serif; font-size: var(--text-title); color: var(--red-main); line-height: 1; margin-bottom: 5px; font-weight: 700; }
+        .food-card-sub { font-size: 14px; color: var(--text-grey); font-weight: 700; margin-bottom: 8px; min-height: 38px; line-height: 1.2; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
+        .food-card-price { font-size: var(--text-price); font-weight: 900; color: var(--green-main); line-height: 1; }
+
+        /* --- SIDEBAR CARNES --- */
+        .logo-container img { width: 300px; object-fit: contain; margin-bottom: 10px; }
+        .sidebar-title { font-family: 'Fredoka', sans-serif; font-size: 42px; color: var(--red-main); margin-bottom: 5px; text-align: center; line-height: 1; }
+
+        .meat-box { background-color: var(--red-main); width: 100%; border-radius: 25px; padding: 20px 25px; display: flex; flex-direction: column; gap: 8px; box-shadow: inset 0 -10px 20px rgba(0,0,0,0.2), 0 15px 30px rgba(227, 24, 55, 0.4); margin-bottom: 20px; }
+        .meat-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 5px; }
+        .meat-name { color: var(--white); font-size: 22px; font-weight: 800; }
+        .meat-sub { color: rgba(255,255,255,0.8); font-size: 14px; text-transform: uppercase; font-weight: 600; }
+        .upcharge-note { color: var(--yellow-main); font-size: 13px; font-weight: 800; text-align: center; margin-top: 5px; letter-spacing: 1px; }
+
+        /* IMAGEN DE BEBIDAS */
+        .drinks-container { position: absolute; bottom: var(--aguas-bottom); right: var(--aguas-right); text-align: center; z-index: 10; display: flex; flex-direction: column; align-items: center; }
+        .drinks-img { width: var(--aguas-size); filter: drop-shadow(0 15px 15px rgba(0,0,0,0.4)); animation: superSlowFloat 8s ease-in-out infinite; }
+        .drinks-label { background: var(--green-main); color: white; font-size: 32px; font-weight: 900; padding: 5px 25px; border-radius: 50px; border: 4px solid white; margin-top: -30px; position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.3); transform: rotate(-2deg); }
+
+        .fullscreen-mode #preview-wrapper { padding: 0; transform: none !important; }
+        .fullscreen-mode #screens-container { flex-direction: row; gap: 0; }
+
+        /* ANIMACIÓN MUY LENTA (Casi Estéril) */
+        @keyframes superSlowFloat { 
+            0% { transform: translateX(-50%) translateY(0px); } 
+            50% { transform: translateX(-50%) translateY(-3px); } 
+            100% { transform: translateX(-50%) translateY(0px); } 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="preview-wrapper">
+        <div id="screens-container">
+            
+            <!-- PANTALLA 1: ESTILOS Y CARNES -->
+            <div class="screen" id="screen-left">
+                <div class="bg-dots"></div>
+                
+                <div class="screen-left-content">
+                    <div class="header-row">
+                        <div class="main-title">PICK YOUR STYLE 🌵</div>
+                        <div class="order-online-btn">ORDENA EN LÍNEA EMILIOSGROCERY.COM</div>
+                    </div>
+                    <div class="papel-picado-border"></div>
+                    <div id="grid-estilos"></div>
+                </div>
+
+                <div class="screen-right-sidebar">
+                    <div class="logo-container">
+                        <img src="https://emiliosgrocery.com/wp-content/uploads/2025/04/Emilios-Grocery-Logo.png" alt="Emilio's Logo">
+                    </div>
+                    <div class="sidebar-title">PICK YOUR MEAT</div>
+                    <div class="papel-picado-border" style="margin-bottom: 15px; height: 10px;"></div>
+                    
+                    <div class="meat-box" id="list-carnes"></div>
+                    
+                    <div class="drinks-container">
+                        <img src="https://i.postimg.cc/4N3NHMrm/DRINKS.png" class="drinks-img" alt="Drinks">
+                        <div class="drinks-label">AGUAS $5</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANTALLA 2: ESPECIALIDADES -->
+            <div class="screen" id="screen-right">
+                <div class="bg-dots"></div>
+                
+                <div class="screen-full-content">
+                    <div class="header-row">
+                        <div class="title-group" style="display:flex; flex-direction:column;">
+                            <div class="main-title">ESPECIALIDADES 🌶️</div>
+                            <div style="color: var(--yellow-main); font-size: 35px; font-weight: 800; font-family: 'Fredoka'; line-height: 1; margin-top: 5px;">SIGNATURE PLATES</div>
+                        </div>
+                        <img src="https://emiliosgrocery.com/wp-content/uploads/2025/04/Emilios-Grocery-Logo.png" alt="Logo" style="height: 120px;">
+                    </div>
+                    <div class="papel-picado-border" style="margin-bottom: 10px;"></div>
+                    <div id="grid-especialidades"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        /* ==============================================================================================
+           NUEVA FUNCIÓN: Ahora puedes poner 'customSize' (ancho) y 'customY' (altura) en CADA plato.
+           Si dejas esto en blanco o no lo pones, usará el tamaño general de arriba.
+           Ejemplo: customSize: "380px", customY: "60px"
+        ============================================================================================== */
+
+        // DATOS DE ESTILOS (Pantalla Izquierda)
+        const ESTILOS = [
+            { nombre: "Tacos", sub: "De Harina $3.59 ea", precio: "$2.59 ea", img: "https://i.postimg.cc/fL53f5Vt/TACOS.png", customSize: "", customY: "" },
+            { nombre: "Burritos", sub: "Chicos $7.99 ea", precio: "$9.99 ea", img: "https://i.postimg.cc/SRDWjk6g/BURRITOS.png", customSize: "", customY: "" },
+            { nombre: "Tortas", sub: "Mexican Sub", precio: "$9.99 ea", img: "https://i.postimg.cc/1tMgrM8Z/TORTA-CUBANO.png", customSize: "", customY: "" },
+            { nombre: "Gorditas", sub: "Stuffed Corn", precio: "$3.59 ea", img: "https://i.postimg.cc/8cK6NwGw/GORDITAS.png", customSize: "", customY: "" },
+            { nombre: "Sopes", sub: "Thick Tortilla", precio: "$3.59 ea", img: "https://i.postimg.cc/7L3JfqDh/SOPES.png", customSize: "", customY: "" },
+            { nombre: "Quesadillas", sub: "Mexicana Maíz $10.99", precio: "$9.99 ea", img: "https://i.postimg.cc/BvTPXJs3/QUESADILLAS.png", customSize: "", customY: "" },
+            { nombre: "Huaraches", sub: "Sandal Shaped", precio: "$7.99 ea", img: "https://i.postimg.cc/SQD86Q96/HUARACHES.png", customSize: "", customY: "" },
+            { nombre: "Platillo", sub: "Rice & Beans", precio: "$10.99", img: "https://i.postimg.cc/cL8nGQbc/PLATILLO.png", customSize: "", customY: "" }
+        ];
+
+        // LISTA DE CARNES (Se ajustó a tus especificaciones exactas)
+        const CARNES = [
+            { es: "Birria", en: "SPICED BEEF" },
+            { es: "Lengua *", en: "BEEF TONGUE" },
+            { es: "Pollo", en: "CHICKEN" },
+            { es: "Chicharrón", en: "PORK RINDS" },
+            { es: "Al Pastor", en: "MARINATED PORK" },
+            { es: "Carnitas", en: "FRIED PORK" },
+            { es: "Chorizo", en: "SAUSAGE" },
+            { es: "Camarón *", en: "SHRIMP" },
+            { es: "Vegetariano", en: "VEGGIE" },
+            { es: "Asada", en: "STEAK" },
+           
+        ];
+
+        // ESPECIALIDADES (Pantalla Derecha - Nuevos platos agregados)
+        const ESPECIALIDADES = [
+            { nombre: "Chilaquiles", sub: "Verde o Rojo. Con carne $13.25", precio: "$10.25", img: "https://i.postimg.cc/vBvnSbS0/CHILAQUILES.png", customSize: "", customY: "" },
+            { nombre: "Torta Cubana", sub: "En Combo $15.25", precio: "$13.25", img: "https://i.postimg.cc/1tMgrM8Z/TORTA-CUBANO.png", customSize: "", customY: "" },
+            { nombre: "Empanadas (3)", sub: "Queso, asada, pollo, al pastor, chorizo, lengua", precio: "$10.99", img: "https://i.postimg.cc/8cK6NwGw/GORDITAS.png", customSize: "", customY: "" },
+            
+            { nombre: "Fajita Mix", sub: "(Pollo, res, camarón)", precio: "$15.99", img: "https://i.postimg.cc/SsG9tktV/FAJITAS.png", customSize: "", customY: "" },
+            { nombre: "Fajita de Res", sub: "Beef Sizzler", precio: "$14.99", img: "https://i.postimg.cc/SsG9tktV/FAJITAS.png", customSize: "", customY: "" },
+            { nombre: "Fajita de Pollo", sub: "Chicken Sizzler", precio: "$13.99", img: "https://i.postimg.cc/SsG9tktV/FAJITAS.png", customSize: "", customY: "" },
+            
+            { nombre: "Fajita Camarón", sub: "Shrimp Sizzler", precio: "$15.99", img: "https://i.postimg.cc/SsG9tktV/FAJITAS.png", customSize: "", customY: "" },
+            { nombre: "Fajita Veggie", sub: "Vegetariana", precio: "$10.99", img: "https://i.postimg.cc/SsG9tktV/FAJITAS.png", customSize: "", customY: "" },
+            { nombre: "Pechuga a la Plancha", sub: "Pechuga a la plancha", precio: "$10.99", img: "https://i.postimg.cc/pXrjqNQB/PECHUGA-A-LA-PLANCHA.png", customSize: "", customY: "" },
+            
+            { nombre: "Carne Asada a Plancha", sub: "Carne asada a la plancha", precio: "$16.99", img: "https://i.postimg.cc/fLsXKJ5p/CARNE-ASADA-A-LA-PLANCHA.png", customSize: "", customY: "" },
+            { nombre: "Quesabirria (3)", sub: "Con Consomé", precio: "$11.99", img: "https://i.postimg.cc/pdbnWmN2/QUESABIRRIA-TACOS.png", customSize: "", customY: "" },
+            { nombre: "Molcajete", sub: "Hot Stone Pot", precio: "$17.99", img: "https://i.postimg.cc/KjqMxQbH/MOLCAJETE.png", customSize: "", customY: "" }
+        ];
+
+        // Renderizar Pantalla 1 (Izquierda)
+        const gEstilos = document.getElementById('grid-estilos');
+        ESTILOS.forEach((item) => {
+            // Lee los tamaños individuales o usa los generales por defecto
+            const imgWidth = item.customSize ? item.customSize : 'var(--img-size-left)';
+            const imgBottom = item.customY ? item.customY : 'var(--img-offset-y-left)';
+
+            gEstilos.innerHTML += `
+                <div class="food-card-wrapper">
+                    <img src="${item.img}" class="food-image" alt="${item.nombre}" style="width: ${imgWidth}; bottom: ${imgBottom};">
+                    <div class="food-text-box">
+                        <div class="food-card-title">${item.nombre}</div>
+                        <div class="food-card-sub">${item.sub}</div>
+                        <div class="food-card-price">${item.precio}</div>
+                    </div>
+                </div>`;
+        });
+
+        // Renderizar Carnes
+        const lCarnes = document.getElementById('list-carnes');
+        CARNES.forEach(item => {
+            lCarnes.innerHTML += `
+                <div class="meat-row">
+                    <span class="meat-name">${item.es}</span>
+                    <span class="meat-sub">${item.en}</span>
+                </div>`;
+        });
+        // Agregar la nota del asterisco al final de la lista de carnes
+        lCarnes.innerHTML += `<div class="upcharge-note">* Items have an upcharge</div>`;
+
+        // Renderizar Pantalla 2 (Derecha)
+        const gSpec = document.getElementById('grid-especialidades');
+        ESPECIALIDADES.forEach((item) => {
+            // Lee los tamaños individuales o usa los generales por defecto
+            const imgWidth = item.customSize ? item.customSize : 'var(--img-size-right)';
+            const imgBottom = item.customY ? item.customY : 'var(--img-offset-y-right)';
+
+            gSpec.innerHTML += `
+                <div class="food-card-wrapper">
+                    <img src="${item.img}" class="food-image" alt="${item.nombre}" style="width: ${imgWidth}; bottom: ${imgBottom};">
+                    <div class="food-text-box">
+                        <div class="food-card-title" style="${item.nombre.length > 13 ? 'font-size: 32px;' : ''}">${item.nombre}</div>
+                        <div class="food-card-sub" style="${item.sub.length > 30 ? 'font-size: 12px;' : ''}">${item.sub}</div>
+                        <div class="food-card-price">${item.precio}</div>
+                    </div>
+                </div>`;
+        });
+
+        // Ajuste de escala para el preview
+        function handleScale() {
+            const wrapper = document.getElementById('preview-wrapper');
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('pantalla')) {
+                document.body.classList.add('fullscreen-mode');
+                return;
+            }
+            const scale = window.innerWidth / 2000;
+            wrapper.style.transform = `scale(${scale})`;
+        }
+        window.onresize = handleScale;
+        window.onload = handleScale;
+    </script>
+</body>
+</html>
