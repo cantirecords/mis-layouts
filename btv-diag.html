@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>BTV — Diagnostico de stream</title>
+<style>
+  body{margin:0;background:#0b0f16;color:#dbe4f0;font:13px/1.6 ui-monospace,Menlo,monospace;padding:16px;}
+  h1{font:600 16px system-ui;margin:0 0 12px;color:#fff;}
+  #log{white-space:pre-wrap;}
+  .ok{color:#6ee787;} .bad{color:#ff7b72;} .warn{color:#e3b341;} .dim{color:#7d8590;}
+  video{width:420px;height:236px;background:#000;margin-top:14px;border:1px solid #30363d;display:block;object-fit:cover;}
+</style>
+</head>
+<body>
+<h1>BTV — Diagnostico de stream</h1>
+<div id="log">corriendo...</div>
+<video id="v" muted playsinline></video>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
+        integrity="sha384-9v3HcdYrO3D+OPDTjZ40RXocgE4GtXVCd3/mCS62JsM93JXgI1afJVuwjFvsu6ni"
+        crossorigin="anonymous"></script>
+<script>
+var MASTER = "https://178-104-23-198.sslip.io/btv-master.m3u8";
+var L = document.getElementById("log");
+var lines = [];
+function p(txt, cls){ lines.push(cls ? '<span class="'+cls+'">'+txt+'</span>' : txt); L.innerHTML = lines.join("\n"); }
+function yn(b){ return b ? "SI" : "NO"; }
+
+var CODEC_V = "video/mp4; " + "codecs" + '="avc1.640028"';
+var CODEC_VA = "video/mp4; " + "codecs" + '="avc1.640028,mp4a.40.2"';
+var CODEC_A = "audio/mp4; " + "codecs" + '="mp4a.40.2"';
+
+function run(){
+  p("== ENTORNO ==");
+  var hasMSE = (typeof MediaSource !== "undefined");
+  p("  MediaSource: " + yn(hasMSE), hasMSE ? "ok" : "bad");
+  if (hasMSE){
+    var a = MediaSource.isTypeSupported(CODEC_V);
+    var b = MediaSource.isTypeSupported(CODEC_VA);
+    var c = MediaSource.isTypeSupported(CODEC_A);
+    p("  H.264 High 4.0 (video):   " + yn(a), a ? "ok" : "bad");
+    p("  H.264 High + AAC:         " + yn(b), b ? "ok" : "bad");
+    p("  AAC-LC (audio):           " + yn(c), c ? "ok" : "bad");
+  }
+  p("  hls.js cargado: " + yn(!!window.Hls) + (window.Hls ? "  v" + Hls.version : ""), window.Hls ? "ok" : "bad");
+  if (window.Hls) p("  hls.js soportado aqui: " + yn(Hls.isSupported()), Hls.isSupported() ? "ok" : "bad");
+  var nat = document.createElement("video").canPlayType("application/vnd.apple.mpegurl");
+  p("  HLS nativo: " + (nat ? nat : "no"), nat ? "ok" : "dim");
+  p("");
+
+  if (!window.Hls || !Hls.isSupported()){ p("No puedo seguir: hls.js no es usable aqui.", "bad"); return; }
+
+  p("== REPRODUCCION ==");
+  var v = document.getElementById("v");
+  var hls = new Hls({ debug:false });
+  var seen = {};
+  function once(key, txt, cls){ if (seen[key]) return; seen[key] = 1; p("  " + txt, cls); }
+
+  hls.on(Hls.Events.MANIFEST_PARSED, function(_e, d){
+    once("mp", "MANIFEST_PARSED  niveles=" + d.levels.length, "ok");
+    if (d.levels[0]) once("codecs", "  nivel 0: " + d.levels[0].width + "x" + d.levels[0].height +
+        "  video=" + (d.levels[0].videoCodec||"?") + "  audio=" + (d.levels[0].audioCodec||"(ninguno declarado)"), "dim");
+    v.play().then(function(){ once("play","play() acepto","ok"); })
+            .catch(function(e){ once("playerr","play() rechazado: " + e.name, "warn"); });
+  });
+  hls.on(Hls.Events.LEVEL_LOADED, function(_e, d){
+    once("ll", "LEVEL_LOADED  live=" + d.details.live + "  fragmentos=" + d.details.fragments.length, "ok");
+  });
+  hls.on(Hls.Events.FRAG_LOADED, function(_e, d){ once("fl", "FRAG_LOADED  sn=" + d.frag.sn, "ok"); });
+  hls.on(Hls.Events.FRAG_PARSED, function(){ once("fp", "FRAG_PARSED", "ok"); });
+  hls.on(Hls.Events.BUFFER_CODECS, function(_e, d){
+    once("bc", "BUFFER_CODECS  " + Object.keys(d).join(" + "), "ok");
+  });
+  hls.on(Hls.Events.BUFFER_APPENDED, function(){ once("ba", "BUFFER_APPENDED", "ok"); });
+  hls.on(Hls.Events.ERROR, function(_e, d){
+    p("  ERROR " + (d.fatal ? "FATAL " : "") + d.type + " / " + d.details +
+      (d.response && d.response.code ? "  http=" + d.response.code : "") +
+      (d.reason ? "  (" + d.reason + ")" : ""), d.fatal ? "bad" : "warn");
+  });
+
+  v.addEventListener("loadedmetadata", function(){ once("lm", "loadedmetadata  " + v.videoWidth + "x" + v.videoHeight, "ok"); });
+  v.addEventListener("canplay", function(){ once("cp", "canplay", "ok"); });
+  v.addEventListener("playing", function(){ once("pl", "PLAYING", "ok"); });
+
+  hls.loadSource(MASTER);
+  hls.attachMedia(v);
+
+  var ticks = 0;
+  var iv = setInterval(function(){
+    ticks++;
+    if (ticks === 20){
+      clearInterval(iv);
+      p("");
+      p("== RESULTADO A LOS 20s ==");
+      var playing = (v.readyState >= 3 && !v.paused && v.currentTime > 0);
+      p("  readyState=" + v.readyState + "  paused=" + v.paused +
+        "  t=" + v.currentTime.toFixed(2) + "  " + v.videoWidth + "x" + v.videoHeight);
+      p("  VEREDICTO: " + (playing ? "EL STREAM REPRODUCE" : "NO REPRODUCE"), playing ? "ok" : "bad");
+      if (playing){
+        p("");
+        p("== AUDIO ==");
+        v.muted = false; v.volume = 1;
+        v.play().catch(function(){});
+        setTimeout(function(){
+          var got = (!v.muted && !v.paused);
+          p("  unmute sin interaccion: " + yn(got), got ? "ok" : "warn");
+          if (!got){ v.muted = true; v.play().catch(function(){});
+            p("  (el navegador lo bloqueo; en la TV depende del player)", "dim"); }
+        }, 1200);
+      }
+    }
+  }, 1000);
+}
+run();
+</script>
+</body>
+</html>

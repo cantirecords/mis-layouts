@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signage Loader v2</title>
+<style>
+  html,body{margin:0;padding:0;background:#000;color:#fff;height:100%;width:100%;overflow:hidden;}
+  #frame{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:#000;}
+  #status{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+          font-family:system-ui,sans-serif;text-align:center;font-size:20px;line-height:1.6;
+          z-index:10;max-width:80vw;}
+  #status.err{color:#ff6b6b;}
+  #dbg{position:fixed;bottom:0;left:0;right:0;max-height:38vh;overflow:auto;
+       background:rgba(0,0,0,.88);color:#8f8;font:11px/1.45 ui-monospace,Menlo,monospace;
+       padding:8px 10px;z-index:20;display:none;white-space:pre-wrap;}
+</style>
+</head>
+<body>
+
+<div id="status">Iniciando...</div>
+<iframe id="frame" allow="autoplay; fullscreen" allowfullscreen style="display:none"></iframe>
+<div id="dbg"></div>
+
+<script>
+/* =====================================================================
+   SIGNAGE LOADER v2
+   ---------------------------------------------------------------------
+   Un solo link por pantalla. Nunca se vuelve a tocar en AbleSign:
+
+       loader-v2.html?client=wiemars
+
+   El loader:
+     1. Resuelve que layout le toca a ese cliente (Sheet, con fallback)
+     2. Lo muestra en un iframe
+     3. Cada POLL_SECS revisa el ETag del layout. Si cambiaste el archivo
+        en GitHub, lo detecta y recarga solo.
+
+   Parametros opcionales:
+       &poll=60     segundos entre chequeos (default 60, minimo 15)
+       &debug=1     consola en pantalla
+       &nosheet=1   ignora el Sheet, usa la convencion ./<client>/
+       &layout=...  fuerza un layout puntual, ignorando el Sheet.
+                    Sirve para probar una version nueva en UNA pantalla
+                    sin tocar el Sheet ni afectar a las demas. Ej:
+                    &layout=wiemar/index-v2.html
+   ===================================================================== */
+
+var SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxN3pLKuMS0IT2okn66PJw1HQmI_OfSS7WXYXrIyr794a07TX82z_H3Z-SrKGBXRtSQ/exec";
+var SHEET_TIMEOUT_MS = 5000;   // si el Sheet tarda mas que esto, seguimos sin el
+var SHEET_RECHECK_MS = 300000; // 5 min: por si repuntaste el cliente a otro layout
+
+var qs        = new URLSearchParams(location.search);
+var CLIENT    = (qs.get("client") || "").trim();
+var POLL_SECS = Math.max(15, parseInt(qs.get("poll") || "60", 10) || 60);
+var DEBUG     = qs.get("debug") === "1";
+var NOSHEET   = qs.get("nosheet") === "1";
+var OVERRIDE  = (qs.get("layout") || "").trim();
+
+var statusEl = document.getElementById("status");
+var frameEl  = document.getElementById("frame");
+var dbgEl    = document.getElementById("dbg");
+
+var layoutUrl   = null;  // URL del layout en uso
+var lastStamp   = null;  // ETag (o Last-Modified) de la ultima version cargada
+var bootAttempt = 0;
+
+if (DEBUG) dbgEl.style.display = "block";
+
+function log(msg){
+  var line = new Date().toTimeString().slice(0,8) + "  " + msg;
+  if (window.console && console.log) console.log("[loader]", msg);
+  if (!DEBUG) return;
+  dbgEl.textContent += line + "\n";
+  dbgEl.scrollTop = dbgEl.scrollHeight;
+}
+
+function setStatus(msg, isErr){
+  statusEl.textContent = msg;
+  statusEl.className = isErr ? "err" : "";
+  statusEl.style.display = "block";
+  log((isErr ? "ERROR: " : "") + msg);
+}
+
+function hideStatus(){ statusEl.style.display = "none"; }
+
+function bust(url){
+  return url + (url.indexOf("?") === -1 ? "?" : "&") + "_t=" + Date.now();
+}
+
+/* --------------------------------------------------- fetch con timeout */
+function fetchTimeout(url, opts, ms){
+  opts = opts || {};
+  if (typeof AbortController === "function"){
+    var ctl = new AbortController();
+    opts.signal = ctl.signal;
+    var timer = setTimeout(function(){ ctl.abort(); }, ms);
+    return fetch(url, opts).then(
+      function(r){ clearTimeout(timer); return r; },
+      function(e){ clearTimeout(timer); throw e; }
+    );
+  }
+  // WebViews viejos sin AbortController
+  return Promise.race([
+    fetch(url, opts),
+    new Promise(function(_, rej){
+      setTimeout(function(){ rej(new Error("timeout")); }, ms);
+    })
+  ]);
+}
+
+/* ------------------------------------------- resolver la URL del layout */
+function fromSheet(){
+  if (NOSHEET) return Promise.resolve(null);
+  return fetchTimeout(bust(SHEET_API_URL), {cache:"no-store"}, SHEET_TIMEOUT_MS)
+    .then(function(r){ return r.json(); })
+    .then(function(rows){
+      if (!Array.isArray(rows)) return null;
+      var want = CLIENT.toLowerCase();
+      for (var i=0; i<rows.length; i++){
+        var row = rows[i];
+        if (row && row.client_id && String(row.client_id).toLowerCase() === want){
+          return row.layout_url || null;
+        }
+      }
+      log("el Sheet respondio pero no tiene a '" + CLIENT + "'");
+      return null;
+    })
+    .catch(function(e){
+      log("Sheet no disponible (" + e.message + "), sigo sin el");
+      return null;
+    });
+}
+
+function headOk(url){
+  return fetchTimeout(bust(url), {method:"HEAD", cache:"no-store"}, 6000)
+    .then(function(r){ return r.ok; })
+    .catch(function(){ return false; });
+}
+
+/* Fallback por convencion: ./<client>/ y, si no existe, sin la 's' final.
+   (el Sheet usa "wiemars" pero la carpeta se llama "wiemar") */
+function byConvention(){
+  var names = [CLIENT];
+  if (/s$/i.test(CLIENT)) names.push(CLIENT.replace(/s$/i, ""));
+  var i = 0;
+  function next(){
+    if (i >= names.length) return Promise.resolve(null);
+    var candidate = new URL("./" + names[i] + "/", location.href).href;
+    i++;
+    return headOk(candidate).then(function(ok){
+      if (ok){ log("convencion: " + candidate); return candidate; }
+      return next();
+    });
+  }
+  return next();
+}
+
+function resolveLayout(){
+  // &layout= manda sobre todo: ni toca el Sheet.
+  if (OVERRIDE){
+    var forced = new URL(OVERRIDE, location.href).href;
+    log("layout forzado por URL: " + forced);
+    return Promise.resolve(forced);
+  }
+  return fromSheet().then(function(url){
+    if (url) { log("Sheet: " + url); return url; }
+    setStatus("Sheet no disponible, resolviendo por convencion...");
+    return byConvention();
+  });
+}
+
+/* ------------------------------------------- huella de version (ETag) */
+function stampOf(url){
+  return fetchTimeout(bust(url), {method:"HEAD", cache:"no-store"}, 10000)
+    .then(function(r){
+      if (!r.ok) return null;
+      // ETag solo es legible same-origin; Last-Modified siempre lo es.
+      return r.headers.get("ETag") || r.headers.get("Last-Modified") || null;
+    })
+    .catch(function(e){ log("chequeo fallo: " + e.message); return null; });
+}
+
+/* ------------------------------------------------------ mostrar layout */
+function showLayout(url){
+  layoutUrl = url;
+  frameEl.style.display = "block";
+  frameEl.src = bust(url);
+  hideStatus();
+  log("cargado: " + url);
+}
+
+function reloadLayout(){
+  if (!layoutUrl) return;
+  log("cambio detectado -> recargando");
+  frameEl.src = bust(layoutUrl);
+}
+
+/* ------------------------------------------------------------ arranque */
+function boot(){
+  if (!CLIENT){
+    setStatus("Falta el parametro ?client= en la URL", true);
+    return;
+  }
+  bootAttempt++;
+  setStatus("Buscando el layout de \"" + CLIENT + "\"...");
+
+  resolveLayout().then(function(url){
+    if (!url) throw new Error("no encontre layout para '" + CLIENT + "'");
+    return stampOf(url).then(function(s){
+      lastStamp = s;
+      log("version inicial: " + (s || "(sin ETag)"));
+      showLayout(url);
+      startPolling();
+    });
+  }).catch(function(e){
+    // Reintento con backoff: 5s, 10s, 20s, 40s... tope 2 min.
+    // Una TV que prende antes que el router se recupera sola.
+    var wait = Math.min(120000, 5000 * Math.pow(2, Math.min(bootAttempt-1, 5)));
+    setStatus(e.message + "\nReintentando en " + Math.round(wait/1000) + "s... (intento " + bootAttempt + ")", true);
+    setTimeout(boot, wait);
+  });
+}
+
+/* ------------------------------------------------------------- polling */
+var pollTimer = null;
+function startPolling(){
+  if (pollTimer) clearInterval(pollTimer);
+  log("vigilando cambios cada " + POLL_SECS + "s");
+  pollTimer = setInterval(checkForChange, POLL_SECS * 1000);
+  // Con &layout= el Sheet no manda: no queremos que nos saque del layout de prueba.
+  if (!NOSHEET && !OVERRIDE) setInterval(checkSheetMoved, SHEET_RECHECK_MS);
+}
+
+function checkForChange(){
+  if (!layoutUrl) return;
+  stampOf(layoutUrl).then(function(s){
+    if (!s) return;                       // sin respuesta: no tocamos nada
+    if (lastStamp === null){ lastStamp = s; return; }
+    if (s !== lastStamp){
+      log("ETag: " + lastStamp + "  ->  " + s);
+      lastStamp = s;
+      reloadLayout();
+    }
+  });
+}
+
+/* Por si en el Sheet le cambiaste el layout_url a este cliente */
+function checkSheetMoved(){
+  fromSheet().then(function(url){
+    if (url && url !== layoutUrl){
+      log("el Sheet repunto el cliente a: " + url);
+      stampOf(url).then(function(s){ lastStamp = s; showLayout(url); });
+    }
+  });
+}
+
+/* Si el iframe queda en blanco por un error de red, lo reintentamos */
+frameEl.addEventListener("error", function(){
+  log("el iframe fallo, reintento en 10s");
+  setTimeout(reloadLayout, 10000);
+});
+
+boot();
+</script>
+</body>
+</html>

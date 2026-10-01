@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Wiemar Signage Pro — BTV Live</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #000; color: white; overflow: hidden; width: 100vw; height: 100vh; }
+
+/* Estructura principal */
+.grid-main { display: grid; grid-template-rows: 50% 50%; height: 100vh; width: 100vw; gap: 5px; padding: 5px; }
+.top-row    { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; height: 100%; }
+.bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; height: 100%; }
+
+/* Cajas contenedoras seguras */
+.box { background: #000; position: relative; overflow: hidden; display: flex;
+       align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+/* Ajuste de Imagenes */
+.box img { position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+           opacity: 0; transition: opacity 0.5s ease-in-out; }
+#topSlideshow img    { object-fit: contain; }
+#bottomSlideshow img { object-fit: cover; max-width: 100%; max-height: 100%; }
+.box img.active { opacity: 1; }
+
+.clock { font-size: 5.5vw; font-family: 'Impact', sans-serif; font-weight: bold; color: #fff; }
+
+video { width: 100%; height: 100%; object-fit: cover; }
+
+.corner-logo { position: fixed; bottom: 15px; right: 15px; background: rgba(0,0,0,.8);
+               padding: 10px; border-radius: 8px; display: flex; align-items: center;
+               gap: 10px; border: 1px solid #444; z-index: 999; }
+.corner-logo img { height: 30px; width: auto; }
+
+/* --- BTV en vivo --- */
+#btvBox { background: #04060c; }
+.live-badge { position: absolute; top: 10px; left: 10px; z-index: 5;
+              background: #E50914; color: #fff; font-size: 12px; font-weight: bold;
+              letter-spacing: .5px; padding: 4px 9px; border-radius: 4px;
+              font-family: system-ui, sans-serif; display: none; }
+.live-badge.on { display: block; }
+#btvMsg { position: absolute; z-index: 6; color: #7d8fa8; font-size: 14px;
+          font-family: system-ui, sans-serif; text-align: center; padding: 0 20px; }
+</style>
+</head>
+
+<body>
+
+<div class="grid-main">
+  <div class="top-row">
+
+    <div class="box" id="topSlideshow">
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/06/8-16-2024-1-scaled.avif" class="active">
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/06/9-11-24a.avif">
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/06/11-24-24-3-scaled.avif">
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/10/1000062696.avif">
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/10/1000062697.avif">
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/06/428670563_10230655054537699_4663040450853901336_n.avif">
+    </div>
+
+    <div class="box">
+      <div class="clock" id="clock">00:00:00 AM</div>
+    </div>
+
+    <div class="box">
+      <video autoplay muted loop playsinline>
+        <source src="https://laprensalatina.com/wp-content/uploads/2025/06/wiemars-logo-diamant-video.mp4" type="video/mp4">
+      </video>
+    </div>
+
+  </div>
+
+  <div class="bottom-row">
+
+    <div class="box" id="bottomSlideshow">
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/06/481052234_10234215243780205_7307714604725075650_n.avif" class="active">
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/06/480239285_1080051100593439_481976388239871683_n.avif">
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/06/DSC05749-scaled.avif">
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/06/DSC06662.avif">
+      <img src="https://laprensalatina.com/wp-content/uploads/2025/06/492487653_1135465708385311_986035875599615656_n.avif">
+    </div>
+
+    <!-- BTV EN VIVO (antes: Wiemars-BTV-02.09.26.mp4) -->
+    <div class="box" id="btvBox">
+      <span class="live-badge" id="btvLive">● EN VIVO</span>
+      <div id="btvMsg">Conectando con BTV...</div>
+      <video id="btvVideo" autoplay muted playsinline></video>
+    </div>
+
+  </div>
+</div>
+
+<div class="corner-logo">
+  <img src="https://laprensalatina.com/wp-content/uploads/2025/07/Bilingual-Media-Logo-LIGHT.avif">
+  <span style="font-size: 12px;">Displays by Bilingual Media Group</span>
+</div>
+
+<!-- hls.js: primero cdnjs, si falla el propio servidor de BTV -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.17/hls.min.js"
+        integrity="sha384-9v3HcdYrO3D+OPDTjZ40RXocgE4GtXVCd3/mCS62JsM93JXgI1afJVuwjFvsu6ni"
+        crossorigin="anonymous"></script>
+<script>
+if (!window.Hls) {
+  document.write('<script src="https://178-104-23-198.sslip.io/hls.min.js"><\/script>');
+}
+</script>
+
+<script>
+/* ---------------- Reloj ---------------- */
+function updateClock(){
+  const now = new Date();
+  let h = now.getHours();
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  document.getElementById("clock").textContent = h + ":" + m + ":" + s + " " + ampm;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ---------------- Slideshows ---------------- */
+function startSlideshow(containerId, time){
+  const container = document.getElementById(containerId);
+  const imgs = container.getElementsByTagName('img');
+  let index = 0;
+  setInterval(() => {
+    if (imgs.length > 0){
+      imgs[index].classList.remove('active');
+      index = (index + 1) % imgs.length;
+      imgs[index].classList.add('active');
+    }
+  }, time);
+}
+startSlideshow("topSlideshow", 5000);
+startSlideshow("bottomSlideshow", 7000);
+
+/* =====================================================================
+   BTV EN VIVO  (HLS + audio)
+   ===================================================================== */
+const BTV_URL   = "https://178-104-23-198.sslip.io/btv-master.m3u8";
+const WANT_AUDIO = true;   // ponelo en false si alguna pantalla debe ir muda
+const VOLUME     = 1.0;    // 0.0 a 1.0
+
+const v      = document.getElementById("btvVideo");
+const msgEl  = document.getElementById("btvMsg");
+const liveEl = document.getElementById("btvLive");
+let hls = null;
+
+function msg(t){ msgEl.textContent = t || ""; msgEl.style.display = t ? "block" : "none"; }
+function live(on){ liveEl.classList.toggle("on", !!on); if (on) msg(""); }
+
+/* --- Audio -------------------------------------------------------------
+   El navegador bloquea el autoplay CON sonido si nadie toco la pantalla.
+   Por eso arrancamos en mute (asi la reproduccion SI empieza) y recien
+   despues intentamos quitar el mute. Si la politica lo rechaza, el video
+   se pausa: lo detectamos, volvemos a mute y reintentamos mas tarde.
+   En la mayoria de los players de signage el unmute pasa sin problema. */
+let audioTries = 0;
+function tryUnmute(){
+  if (!WANT_AUDIO || !v.muted || audioTries > 40) return;
+  audioTries++;
+  v.muted = false;
+  v.volume = VOLUME;
+  const p = v.play();
+  if (p && p.catch) p.catch(() => {});
+  setTimeout(() => {
+    if (v.paused || v.muted){
+      v.muted = true;                 // la politica lo rechazo
+      v.play().catch(() => {});
+      setTimeout(tryUnmute, 15000);   // reintentamos sin molestar
+    } else {
+      console.log("[btv] audio activado");
+    }
+  }, 400);
+}
+
+/* Cualquier interaccion habilita el audio de inmediato (util al probar) */
+["click","touchstart","keydown"].forEach(ev =>
+  document.addEventListener(ev, () => { audioTries = 0; tryUnmute(); }, {passive:true})
+);
+
+function startBtv(){
+  if (hls){ try { hls.destroy(); } catch(e){} hls = null; }
+
+  if (window.Hls && Hls.isSupported()){
+    hls = new Hls({
+      liveSyncDurationCount: 3,
+      manifestLoadingMaxRetry: Infinity,
+      levelLoadingMaxRetry: Infinity,
+      fragLoadingMaxRetry: Infinity
+    });
+    hls.loadSource(BTV_URL);
+    hls.attachMedia(v);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      v.play().then(() => { live(true); tryUnmute(); }).catch(() => {});
+    });
+    hls.on(Hls.Events.ERROR, (_e, data) => {
+      if (!data.fatal) return;
+      console.warn("[btv] error fatal:", data.type, data.details);
+      live(false);
+      msg("Reconectando con BTV...");
+      if (data.type === Hls.ErrorTypes.NETWORK_ERROR)      hls.startLoad();
+      else if (data.type === Hls.ErrorTypes.MEDIA_ERROR)   hls.recoverMediaError();
+      else setTimeout(startBtv, 5000);
+    });
+  } else if (v.canPlayType("application/vnd.apple.mpegurl")){
+    // Safari / iOS reproducen HLS nativo
+    v.src = BTV_URL;
+    v.addEventListener("loadedmetadata", () => {
+      v.play().then(() => { live(true); tryUnmute(); }).catch(() => {});
+    }, {once:true});
+  } else {
+    msg("Este reproductor no soporta HLS");
+    return;
+  }
+}
+
+/* Watchdog: si el reloj del video deja de avanzar 20s, reconectamos.
+   Cubre el caso de que el servidor hipe y el stream quede congelado. */
+let lastT = -1, stuck = 0;
+setInterval(() => {
+  if (v.readyState >= 2 && !v.paused){
+    if (Math.abs(v.currentTime - lastT) < 0.05){
+      if (++stuck >= 4){ stuck = 0; console.warn("[btv] congelado, reconecto"); live(false); startBtv(); }
+    } else { stuck = 0; live(true); }
+    lastT = v.currentTime;
+  } else if (v.paused){
+    v.play().catch(() => {});
+  }
+}, 5000);
+
+v.addEventListener("playing", () => live(true));
+v.addEventListener("waiting", () => msg("Buffering..."));
+
+startBtv();
+</script>
+
+</body>
+</html>
