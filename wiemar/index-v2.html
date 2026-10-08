@@ -82,7 +82,6 @@ video { width: 100%; height: 100%; object-fit: cover; }
 
     <!-- BTV EN VIVO (antes: Wiemars-BTV-02.09.26.mp4) -->
     <div class="box" id="btvBox">
-      <span class="live-badge" id="btvLive">● EN VIVO</span>
       <div id="btvMsg">Conectando con BTV...</div>
       <video id="btvVideo" playsinline></video>
     </div>
@@ -138,123 +137,142 @@ startSlideshow("bottomSlideshow", 7000);
 /* =====================================================================
    BTV EN VIVO  (HLS + audio)
    ===================================================================== */
-const BTV_URL   = "https://178-104-23-198.sslip.io/btv-master.m3u8";
+/* Usamos directo la version 480p: la caja ocupa media pantalla (~960x540),
+   asi que 480p se ve igual y pesa 4 veces menos que 1080p. Ademas las dos
+   versiones del servidor no estan alineadas, y cambiar entre ellas era lo
+   que congelaba el video. El master queda de respaldo. */
+const BTV_SOURCES = [
+  "https://178-104-23-198.sslip.io/btv_480/main_stream.m3u8",
+  "https://178-104-23-198.sslip.io/btv-master.m3u8"
+];
 const WANT_AUDIO = true;   // ponelo en false si alguna pantalla debe ir muda
 const VOLUME     = 1.0;    // 0.0 a 1.0
 
-const v      = document.getElementById("btvVideo");
-const msgEl  = document.getElementById("btvMsg");
-const liveEl = document.getElementById("btvLive");
-let hls = null;
+const v     = document.getElementById("btvVideo");
+const msgEl = document.getElementById("btvMsg");
+let hls = null, srcIdx = 0, fatalCount = 0;
 
 function msg(t){ msgEl.textContent = t || ""; msgEl.style.display = t ? "block" : "none"; }
-function live(on){ liveEl.classList.toggle("on", !!on); if (on) msg(""); }
 
 /* --- Audio -------------------------------------------------------------
-   El navegador bloquea el autoplay CON sonido si nadie toco la pantalla.
-   Por eso arrancamos en mute (asi la reproduccion SI empieza) y recien
-   despues intentamos quitar el mute. Si la politica lo rechaza, el video
-   se pausa: lo detectamos, volvemos a mute y reintentamos mas tarde.
-   En la mayoria de los players de signage el unmute pasa sin problema. */
-let audioTries = 0;
-function tryUnmute(){
-  if (!WANT_AUDIO || !v.muted || audioTries > 40) return;
-  audioTries++;
-  v.muted = false;
-  v.volume = VOLUME;
+   Arrancamos SIEMPRE intentando con sonido. Solo si el navegador dice
+   explicitamente "NotAllowedError" (bloqueo de autoplay) pasamos a mudo.
+   Cualquier otro error (p.ej. AbortError al reconectar) NO nos mutea:
+   antes eso hacia que el audio se perdiera a mitad de la transmision.
+   Si quedamos mudos, chequeamos en silencio (sin pausar el video) si el
+   navegador ya permite audio, y apenas lo permite lo prendemos. */
+let audioBlocked = false;
+
+function play(){
+  if (!WANT_AUDIO){ v.muted = true; v.play().catch(()=>{}); return; }
+  if (!audioBlocked){ v.muted = false; v.volume = VOLUME; }
   const p = v.play();
-  if (p && p.catch) p.catch(() => {});
-  setTimeout(() => {
-    if (v.paused || v.muted){
-      v.muted = true;                 // la politica lo rechazo
-      v.play().catch(() => {});
-      setTimeout(tryUnmute, 15000);   // reintentamos sin molestar
+  if (p && p.catch) p.catch(err => {
+    if (err && err.name === "NotAllowedError" && !v.muted){
+      audioBlocked = true;
+      v.muted = true;
+      v.play().catch(()=>{});
+      console.warn("[btv] el navegador bloqueo el audio, sigo mudo y reintento");
     } else {
-      console.log("[btv] audio activado");
+      setTimeout(() => { if (v.paused) play(); }, 1000);   // reintento normal
     }
-  }, 400);
+  });
 }
 
-/* Cualquier interaccion habilita el audio de inmediato (util al probar) */
-["click","touchstart","keydown"].forEach(ev =>
-  document.addEventListener(ev, () => { audioTries = 0; tryUnmute(); }, {passive:true})
+function audioAllowed(){
+  try {
+    if (navigator.getAutoplayPolicy) return navigator.getAutoplayPolicy("mediaelement") === "allowed";
+  } catch(e){}
+  return actx && actx.state === "running";
+}
+let actx = null;
+try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+
+setInterval(() => {
+  if (!WANT_AUDIO || !audioBlocked) return;
+  if (actx && actx.state !== "running") actx.resume().catch(()=>{});
+  if (audioAllowed()){
+    audioBlocked = false; v.muted = false; v.volume = VOLUME;
+    console.log("[btv] audio activado");
+  }
+}, 3000);
+
+/* Cualquier boton del control / toque prende el audio al instante */
+["click","touchstart","keydown","keyup"].forEach(ev =>
+  document.addEventListener(ev, () => {
+    if (actx) actx.resume().catch(()=>{});
+    audioBlocked = false; v.muted = false; v.volume = VOLUME; play();
+  }, {passive:true})
 );
 
-/* Primero intentamos arrancar CON sonido (muchos players de signage lo
-   permiten). Si el WebView lo bloquea, arrancamos mudo y seguimos
-   intentando quitar el mute. */
-function playWithSound(){
-  if (WANT_AUDIO){
-    v.muted = false; v.volume = VOLUME;
-    v.play().then(() => { live(true); console.log("[btv] arranco con audio"); })
-     .catch(() => { v.muted = true; v.play().then(() => { live(true); tryUnmute(); }).catch(() => {}); });
-  } else {
-    v.play().then(() => live(true)).catch(() => {});
-  }
-}
-
+/* --- Stream ------------------------------------------------------------ */
 function startBtv(){
   if (hls){ try { hls.destroy(); } catch(e){} hls = null; }
+  const url = BTV_SOURCES[srcIdx];
 
   if (window.Hls && Hls.isSupported()){
     hls = new Hls({
-      /* Calidad automatica segun el internet: arranca en 480p (rapido, no
-         se traba) y sube a 1080p solo si la conexion aguanta con margen. */
+      /* El servidor guarda solo 5 pedazos de 2s (10s). Nos paramos a 3
+         pedazos del vivo: margen para que el internet no lo trabe, sin
+         caernos de la ventana del servidor. */
+      liveSyncDurationCount: 3,
+      liveMaxLatencyDurationCount: 4,
+      maxLiveSyncPlaybackRate: 1.05,   // se pone al dia acelerando apenas
       startLevel: 0,
-      abrEwmaDefaultEstimate: 1500000,
-      abrBandWidthFactor: 0.8,       // baja rapido si el internet flojea
-      abrBandWidthUpFactor: 0.5,     // sube solo con el doble de margen
-      /* Colchon mas grande: un poco mas de retraso, pero menos trabones */
-      liveSyncDurationCount: 5,
-      liveMaxLatencyDurationCount: 12,
-      maxBufferLength: 30,
-      backBufferLength: 30,
+      capLevelToPlayerSize: true,
+      backBufferLength: 10,
+      enableWorker: true,
       manifestLoadingMaxRetry: Infinity,
       levelLoadingMaxRetry: Infinity,
       fragLoadingMaxRetry: Infinity
     });
-    hls.loadSource(BTV_URL);
+    hls.loadSource(url);
     hls.attachMedia(v);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      playWithSound();
-    });
+    hls.on(Hls.Events.MANIFEST_PARSED, () => { fatalCount = 0; play(); });
     hls.on(Hls.Events.ERROR, (_e, data) => {
       if (!data.fatal) return;
       console.warn("[btv] error fatal:", data.type, data.details);
-      live(false);
-      msg("Reconectando con BTV...");
-      if (data.type === Hls.ErrorTypes.NETWORK_ERROR)      hls.startLoad();
-      else if (data.type === Hls.ErrorTypes.MEDIA_ERROR)   hls.recoverMediaError();
-      else setTimeout(startBtv, 5000);
+      if (++fatalCount >= 3){           // 3 fallos seguidos: probamos la otra fuente
+        fatalCount = 0;
+        srcIdx = (srcIdx + 1) % BTV_SOURCES.length;
+        setTimeout(startBtv, 1000);
+      } else if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
+      else if (data.type === Hls.ErrorTypes.MEDIA_ERROR)     hls.recoverMediaError();
+      else setTimeout(startBtv, 2000);
     });
   } else if (v.canPlayType("application/vnd.apple.mpegurl")){
-    // Safari / iOS reproducen HLS nativo
-    v.src = BTV_URL;
-    v.addEventListener("loadedmetadata", () => {
-      playWithSound();
-    }, {once:true});
+    v.src = url;
+    v.addEventListener("loadedmetadata", play, {once:true});
   } else {
     msg("Este reproductor no soporta HLS");
-    return;
   }
 }
 
-/* Watchdog: si el reloj del video deja de avanzar 20s, reconectamos.
-   Cubre el caso de que el servidor hipe y el stream quede congelado. */
-let lastT = -1, stuck = 0;
+/* --- Anti-congelado ----------------------------------------------------
+   Revisamos cada 2s. Si el video no avanza:
+     4s  -> saltamos al punto en vivo (casi instantaneo, no se nota)
+     10s -> reconectamos todo
+   Antes esperaba 20s y luego reconectaba: por eso tardaba ~30s. */
+let lastT = -1, stuckFor = 0;
 setInterval(() => {
-  if (v.readyState >= 2 && !v.paused){
-    if (Math.abs(v.currentTime - lastT) < 0.05){
-      if (++stuck >= 4){ stuck = 0; console.warn("[btv] congelado, reconecto"); live(false); startBtv(); }
-    } else { stuck = 0; live(true); }
-    lastT = v.currentTime;
-  } else if (v.paused){
-    v.play().catch(() => {});
+  if (v.paused){ if (v.readyState >= 2) play(); stuckFor = 0; return; }
+  if (Math.abs(v.currentTime - lastT) < 0.05){
+    stuckFor += 2;
+    if (stuckFor === 4 && hls && hls.liveSyncPosition){
+      console.warn("[btv] trabado, salto al vivo");
+      v.currentTime = hls.liveSyncPosition;
+    } else if (stuckFor >= 10){
+      console.warn("[btv] sigue trabado, reconecto");
+      stuckFor = 0; startBtv();
+    }
+  } else {
+    stuckFor = 0;
+    if (msgEl.style.display !== "none") msg("");
   }
-}, 5000);
+  lastT = v.currentTime;
+}, 2000);
 
-v.addEventListener("playing", () => live(true));
-v.addEventListener("waiting", () => msg("Buffering..."));
+v.addEventListener("playing", () => msg(""));
 
 startBtv();
 </script>
