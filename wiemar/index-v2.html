@@ -84,7 +84,7 @@ video { width: 100%; height: 100%; object-fit: cover; }
     <div class="box" id="btvBox">
       <span class="live-badge" id="btvLive">● EN VIVO</span>
       <div id="btvMsg">Conectando con BTV...</div>
-      <video id="btvVideo" autoplay muted playsinline></video>
+      <video id="btvVideo" playsinline></video>
     </div>
 
   </div>
@@ -180,12 +180,35 @@ function tryUnmute(){
   document.addEventListener(ev, () => { audioTries = 0; tryUnmute(); }, {passive:true})
 );
 
+/* Primero intentamos arrancar CON sonido (muchos players de signage lo
+   permiten). Si el WebView lo bloquea, arrancamos mudo y seguimos
+   intentando quitar el mute. */
+function playWithSound(){
+  if (WANT_AUDIO){
+    v.muted = false; v.volume = VOLUME;
+    v.play().then(() => { live(true); console.log("[btv] arranco con audio"); })
+     .catch(() => { v.muted = true; v.play().then(() => { live(true); tryUnmute(); }).catch(() => {}); });
+  } else {
+    v.play().then(() => live(true)).catch(() => {});
+  }
+}
+
 function startBtv(){
   if (hls){ try { hls.destroy(); } catch(e){} hls = null; }
 
   if (window.Hls && Hls.isSupported()){
     hls = new Hls({
-      liveSyncDurationCount: 3,
+      /* Calidad automatica segun el internet: arranca en 480p (rapido, no
+         se traba) y sube a 1080p solo si la conexion aguanta con margen. */
+      startLevel: 0,
+      abrEwmaDefaultEstimate: 1500000,
+      abrBandWidthFactor: 0.8,       // baja rapido si el internet flojea
+      abrBandWidthUpFactor: 0.5,     // sube solo con el doble de margen
+      /* Colchon mas grande: un poco mas de retraso, pero menos trabones */
+      liveSyncDurationCount: 5,
+      liveMaxLatencyDurationCount: 12,
+      maxBufferLength: 30,
+      backBufferLength: 30,
       manifestLoadingMaxRetry: Infinity,
       levelLoadingMaxRetry: Infinity,
       fragLoadingMaxRetry: Infinity
@@ -193,7 +216,7 @@ function startBtv(){
     hls.loadSource(BTV_URL);
     hls.attachMedia(v);
     hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      v.play().then(() => { live(true); tryUnmute(); }).catch(() => {});
+      playWithSound();
     });
     hls.on(Hls.Events.ERROR, (_e, data) => {
       if (!data.fatal) return;
@@ -208,7 +231,7 @@ function startBtv(){
     // Safari / iOS reproducen HLS nativo
     v.src = BTV_URL;
     v.addEventListener("loadedmetadata", () => {
-      v.play().then(() => { live(true); tryUnmute(); }).catch(() => {});
+      playWithSound();
     }, {once:true});
   } else {
     msg("Este reproductor no soporta HLS");
